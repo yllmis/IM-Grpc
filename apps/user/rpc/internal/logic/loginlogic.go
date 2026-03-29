@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/IM_System/apps/user/models"
@@ -10,13 +9,15 @@ import (
 	"github.com/IM_System/apps/user/rpc/user"
 	"github.com/IM_System/pkg/ctxdata"
 	"github.com/IM_System/pkg/encrypt"
+	"github.com/IM_System/pkg/xerr"
+	"github.com/pkg/errors"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
 var (
-	ErrPhoneNotRegister = errors.New("手机号未注册")
-	ErrPasswordError    = errors.New("密码错误")
+	ErrPhoneNotRegister = xerr.New(xerr.SERVER_COMMON_ERR, "手机号未注册")
+	ErrPasswordError    = xerr.New(xerr.SERVER_COMMON_ERR, "密码错误")
 )
 
 type LoginLogic struct {
@@ -40,21 +41,21 @@ func (l *LoginLogic) Login(in *user.LoginReq) (*user.LoginResp, error) {
 	userEntity, err := l.svcCtx.UsersModel.FindPhone(l.ctx, in.Phone)
 	if err != nil {
 		if err == models.ErrNotFound {
-			return nil, ErrPhoneNotRegister
+			return nil, errors.WithStack(ErrPhoneNotRegister)
 		}
-		return nil, err
+		return nil, errors.Wrapf(xerr.NewDBErr(), "find user by phone error: %v, req: %v", err, in.Phone)
 	}
 
 	// 验证密码
 	if !encrypt.ValidatePasswordHash(in.Password, userEntity.Password.String) {
-		return nil, ErrPasswordError
+		return nil, errors.WithStack(ErrPasswordError)
 	}
 
 	// 生成token
 	now := time.Now().Unix()
 	token, err := ctxdata.GetTokenKey(l.svcCtx.Config.Jwt.AccessSecret, now, l.svcCtx.Config.Jwt.AccessExpire, userEntity.Id)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(xerr.NewDBErr(), "ctxdata get jwt token err: %v", err)
 	}
 
 	return &user.LoginResp{
