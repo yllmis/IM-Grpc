@@ -10,9 +10,11 @@ import (
 	"github.com/IM_System/apps/user/api/internal/config"
 	"github.com/IM_System/apps/user/api/internal/handler"
 	"github.com/IM_System/apps/user/api/internal/svc"
+	"github.com/IM_System/pkg/resultx"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"
+	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
 var configFile = flag.String("f", "etc/dev/user copy.yaml", "the config file")
@@ -28,6 +30,9 @@ func main() {
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
+
+	httpx.SetErrorHandlerCtx(resultx.ErrHandler(c.Name))
+	httpx.SetOkHandler(resultx.OkHandler)
 
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	server.Start()
