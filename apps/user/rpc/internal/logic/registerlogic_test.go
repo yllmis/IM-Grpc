@@ -19,12 +19,12 @@ func TestRegisterLogic_Register(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{
-			"1", args{in: &user.RegisterReq{
-				Phone:    "12345678901",
-				Nickname: "yyy",
+			"2", args{in: &user.RegisterReq{
+				Phone:    "12345678905",
+				Nickname: "yj",
 				Password: "123456",
-				Avatar:   "png.jpg",
-				Sex:      1,
+				Avatar:   "png.jpg.jpg",
+				Sex:      2,
 			}}, true, false,
 		},
 	}

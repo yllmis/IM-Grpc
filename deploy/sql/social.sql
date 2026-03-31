@@ -1,6 +1,3 @@
-  CREATE DATABASE IF NOT EXISTS `social` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-  USE `social`;
-
   -- ----------------------------
   -- 1. 好友关系表
   -- ----------------------------
@@ -10,7 +7,7 @@
     `friend_uid` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '好友ID',
     `remark` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '好友备注',
     `add_source` tinyint(4) DEFAULT NULL COMMENT '添加来源(如1:搜索, 2:群聊等)',
-    `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
+    `created_at` timestamp NULL DEFAULT NULL COMMENT '添加时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_user_friend` (`user_id`,`friend_uid`) -- 联合唯一索引，防止重复添加
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='好友关系表';

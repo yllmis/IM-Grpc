@@ -31,8 +31,10 @@ var (
 type (
 	friendsModel interface {
 		Insert(ctx context.Context, data *Friends) (sql.Result, error)
+		Inserts(ctx context.Context, session sqlx.Session, data ...*Friends) (sql.Result, error)
 		FindOne(ctx context.Context, id uint64) (*Friends, error)
 		FindOneByUserIdFriendUid(ctx context.Context, userId string, friendUid string) (*Friends, error)
+		ListByUserId(ctx context.Context, userId string) ([]*Friends, error)
 		Update(ctx context.Context, data *Friends) error
 		Delete(ctx context.Context, id uint64) error
 	}
@@ -111,6 +113,19 @@ func (m *defaultFriendsModel) FindOneByUserIdFriendUid(ctx context.Context, user
 	}
 }
 
+func (m *defaultFriendsModel) ListByUserId(ctx context.Context, userId string) ([]*Friends, error) {
+	query := fmt.Sprintf("select %s from %s where `user_id` = ?", friendsRows, m.table)
+
+	var resp []*Friends
+	err := m.QueryRowsNoCacheCtx(ctx, &resp, query, userId)
+	switch err {
+	case nil:
+		return resp, nil
+	default:
+		return nil, err
+	}
+}
+
 func (m *defaultFriendsModel) Insert(ctx context.Context, data *Friends) (sql.Result, error) {
 	friendsIdKey := fmt.Sprintf("%s%v", cacheFriendsIdPrefix, data.Id)
 	friendsUserIdFriendUidKey := fmt.Sprintf("%s%v:%v", cacheFriendsUserIdFriendUidPrefix, data.UserId, data.FriendUid)
@@ -119,6 +134,30 @@ func (m *defaultFriendsModel) Insert(ctx context.Context, data *Friends) (sql.Re
 		return conn.ExecCtx(ctx, query, data.UserId, data.FriendUid, data.Remark, data.AddSource)
 	}, friendsIdKey, friendsUserIdFriendUidKey)
 	return ret, err
+}
+
+func (m *defaultFriendsModel) Inserts(ctx context.Context, session sqlx.Session, data ...*Friends) (sql.Result, error) {
+	var (
+		sql  strings.Builder
+		args []any
+	)
+
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	// insert into tablename (数据) (数据)
+	sql.WriteString(fmt.Sprintf("insert into %s (%s) values", m.table, friendsRowsExpectAutoSet))
+
+	for i, v := range data {
+		sql.WriteString("(?, ?, ?, ?)")
+		args = append(args, v.UserId, v.FriendUid, v.Remark, v.AddSource)
+		if i != len(data)-1 {
+			sql.WriteString(",")
+		}
+	}
+
+	return session.ExecCtx(ctx, sql.String(), args...)
 }
 
 func (m *defaultFriendsModel) Update(ctx context.Context, newData *Friends) error {
