@@ -3,7 +3,7 @@ package ctxdata
 import "context"
 
 func GetUid(ctx context.Context) string {
-	if uid, ok := ctx.Value("Identify").(string); ok {
+	if uid, ok := ctx.Value(Identify).(string); ok {
 		return uid
 	}
 	return ""

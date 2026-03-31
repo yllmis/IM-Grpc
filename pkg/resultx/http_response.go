@@ -48,11 +48,8 @@ func ErrHandler(name string) func(ctx context.Context, err error) (int, any) {
 			errmsg = e.Msg
 		} else {
 			if gstatus, ok := status.FromError(err); ok {
-				grpcCode := int(gstatus.Code())
-				if msg := xerr.ErrMsg(grpcCode); msg != "" {
-					errcode = grpcCode
-					errmsg = msg
-				}
+				errcode = int(gstatus.Code())
+				errmsg = gstatus.Message()
 			}
 		}
 
