@@ -29,11 +29,12 @@ var (
 
 type (
 	friendRequestsModel interface {
+		Trans(ctx context.Context, fn func(context.Context, sqlx.Session) error) error
 		Insert(ctx context.Context, data *FriendRequests) (sql.Result, error)
-		FindOne(ctx context.Context, id uint64) (*FriendRequests, error)
-		FindOneByUidAndUerId(ctx context.Context, uid string, userId string) (*FriendRequests, error)
-		Update(ctx context.Context, data *FriendRequests) error
-		Delete(ctx context.Context, id uint64) error
+		FindOne(ctx context.Context, id int64) (*FriendRequests, error)
+		FindOneByUidAndUerId(ctx context.Context, rid string, uid string) (*FriendRequests, error)
+		Update(ctx context.Context, session sqlx.Session, data *FriendRequests) error
+		Delete(ctx context.Context, id int64) error
 	}
 
 	defaultFriendRequestsModel struct {
@@ -42,7 +43,7 @@ type (
 	}
 
 	FriendRequests struct {
-		Id           uint64         `db:"id"`
+		Id           int64          `db:"id"`
 		UserId       string         `db:"user_id"`       // 申请人ID
 		ReqUid       string         `db:"req_uid"`       // 被申请人ID
 		ReqMsg       sql.NullString `db:"req_msg"`       // 验证消息
@@ -60,7 +61,7 @@ func newFriendRequestsModel(conn sqlx.SqlConn, c cache.CacheConf, opts ...cache.
 	}
 }
 
-func (m *defaultFriendRequestsModel) Delete(ctx context.Context, id uint64) error {
+func (m *defaultFriendRequestsModel) Delete(ctx context.Context, id int64) error {
 	friendRequestsIdKey := fmt.Sprintf("%s%v", cacheFriendRequestsIdPrefix, id)
 	_, err := m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
 		query := fmt.Sprintf("delete from %s where `id` = ?", m.table)
@@ -69,7 +70,7 @@ func (m *defaultFriendRequestsModel) Delete(ctx context.Context, id uint64) erro
 	return err
 }
 
-func (m *defaultFriendRequestsModel) FindOne(ctx context.Context, id uint64) (*FriendRequests, error) {
+func (m *defaultFriendRequestsModel) FindOne(ctx context.Context, id int64) (*FriendRequests, error) {
 	friendRequestsIdKey := fmt.Sprintf("%s%v", cacheFriendRequestsIdPrefix, id)
 	var resp FriendRequests
 	err := m.QueryRowCtx(ctx, &resp, friendRequestsIdKey, func(ctx context.Context, conn sqlx.SqlConn, v any) error {
@@ -110,11 +111,17 @@ func (m *defaultFriendRequestsModel) Insert(ctx context.Context, data *FriendReq
 	return ret, err
 }
 
-func (m *defaultFriendRequestsModel) Update(ctx context.Context, data *FriendRequests) error {
+func (m *defaultFriendRequestsModel) Trans(ctx context.Context, fn func(context.Context, sqlx.Session) error) error {
+	return m.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
+		return fn(ctx, session)
+	})
+}
+
+func (m *defaultFriendRequestsModel) Update(ctx context.Context, session sqlx.Session, data *FriendRequests) error {
 	friendRequestsIdKey := fmt.Sprintf("%s%v", cacheFriendRequestsIdPrefix, data.Id)
 	_, err := m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
 		query := fmt.Sprintf("update %s set %s where `id` = ?", m.table, friendRequestsRowsWithPlaceHolder)
-		return conn.ExecCtx(ctx, query, data.UserId, data.ReqUid, data.ReqMsg, data.ReqTime, data.HandleResult, data.HandleMsg, data.HandledAt, data.Id)
+		return session.ExecCtx(ctx, query, data.UserId, data.ReqUid, data.ReqMsg, data.ReqTime, data.HandleResult, data.HandleMsg, data.HandledAt, data.Id)
 	}, friendRequestsIdKey)
 	return err
 }

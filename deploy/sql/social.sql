@@ -19,7 +19,7 @@
   -- 2. 好友申请表
   -- ----------------------------
   CREATE TABLE `friend_requests` (
-    `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+    `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '申请人ID',
     `req_uid` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '被申请人ID',
     `req_msg` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '验证消息',
