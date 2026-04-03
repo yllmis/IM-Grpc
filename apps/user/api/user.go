@@ -17,7 +17,7 @@ import (
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-var configFile = flag.String("f", "etc/dev/user copy.yaml", "the config file")
+var configFile = flag.String("f", "etc/dev/user.yaml", "the config file")
 
 func main() {
 	flag.Parse()
