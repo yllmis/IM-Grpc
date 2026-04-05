@@ -6,6 +6,7 @@ need_start_server_shell=(
     # api启动脚本
     user-api-test.sh
     social-api-test.sh
+)
 
 for i in ${need_start_server_shell[*]}; do
     chmod +x $i

@@ -53,13 +53,13 @@ func (l *LoginLogic) Login(in *user.LoginReq) (*user.LoginResp, error) {
 
 	// 生成token
 	now := time.Now().Unix()
-	token, err := ctxdata.GetTokenKey(l.svcCtx.Config.Jwt.AccessSecret, now, l.svcCtx.Config.Jwt.AccessExpire, userEntity.Id)
+	token, err := ctxdata.GetTokenKey(l.svcCtx.Config.JwtAuth.AccessSecret, now, l.svcCtx.Config.JwtAuth.AccessExpire, userEntity.Id)
 	if err != nil {
 		return nil, errors.Wrapf(xerr.NewDBErr(), "ctxdata get jwt token err: %v", err)
 	}
 
 	return &user.LoginResp{
 		Token:  token,
-		Expire: now + l.svcCtx.Config.Jwt.AccessExpire,
+		Expire: now + l.svcCtx.Config.JwtAuth.AccessExpire,
 	}, nil
 }

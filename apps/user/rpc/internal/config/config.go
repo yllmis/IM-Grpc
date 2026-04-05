@@ -14,7 +14,7 @@ type Config struct {
 
 	Cache cache.CacheConf
 
-	Jwt struct {
+	JwtAuth struct {
 		AccessSecret string
 		AccessExpire int64
 	}
