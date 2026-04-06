@@ -1,10 +1,14 @@
 package websocket
 
+import "time"
+
 type ServerOptions func(opt *serverOption)
 
 type serverOption struct {
 	Authentication
 	patten string
+
+	maxIdleConnection time.Duration
 }
 
 func newServerOptions(opts ...ServerOptions) serverOption {
@@ -30,5 +34,13 @@ func WithAuthentication(auth Authentication) ServerOptions {
 func WithServePattern(patten string) ServerOptions {
 	return func(opt *serverOption) {
 		opt.patten = patten
+	}
+}
+
+func WithMaxIdleConnectionIdle(maxIdleConnectionTime time.Duration) ServerOptions {
+	return func(opt *serverOption) {
+		if maxIdleConnectionTime > 0 {
+			opt.maxIdleConnection = maxIdleConnectionTime
+		}
 	}
 }

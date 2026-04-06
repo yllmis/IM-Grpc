@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"time"
 
 	"github.com/IM_System/apps/im/ws/internal/config"
 	"github.com/IM_System/apps/im/ws/internal/handler"
@@ -22,10 +23,12 @@ func main() {
 	if err := c.SetUp(); err != nil {
 		panic(err)
 	}
-	srv := websocket.NewServer(c.ListenOn)
-	defer srv.Stop()
-
 	ctx := svc.NewServiceContext(c)
+	srv := websocket.NewServer(c.ListenOn,
+		websocket.WithAuthentication(handler.NewJwtAuth(ctx)),
+		websocket.WithMaxIdleConnectionIdle(10*time.Second),
+	)
+	defer srv.Stop()
 
 	handler.RegisterHandlers(srv, ctx)
 

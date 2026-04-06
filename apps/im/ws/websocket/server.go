@@ -18,10 +18,11 @@ type Server struct {
 	routes         map[string]HandlerFunc
 	addr           string
 	patten         string
+	opt            *serverOption
 
 	// 连接管理
-	connToUser map[*websocket.Conn]string
-	userToConn map[string]*websocket.Conn
+	connToUser map[*Conn]string
+	userToConn map[string]*Conn
 
 	upgrader websocket.Upgrader
 	logx.Logger
@@ -36,11 +37,12 @@ func NewServer(addr string, opts ...ServerOptions) *Server {
 		addr:     addr,
 		patten:   opt.patten,
 		upgrader: websocket.Upgrader{},
+		opt:      &opt,
 
 		authentication: opt.Authentication,
 
-		connToUser: make(map[*websocket.Conn]string),
-		userToConn: make(map[string]*websocket.Conn),
+		connToUser: make(map[*Conn]string),
+		userToConn: make(map[string]*Conn),
 
 		Logger: logx.WithContext(context.Background()),
 	}
@@ -54,15 +56,23 @@ func (s *Server) ServerWs(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	conn, err := s.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		s.Errorf("upgrade err %v", err)
+	conn := NewConn(s, w, r)
+	if conn == nil {
 		return
 	}
+	// conn, err := s.upgrader.Upgrade(w, r, nil)
+	// if err != nil {
+	// 	s.Errorf("upgrade err %v", err)
+	// 	return
+	// }
 
 	if !s.authentication.Auth(w, r) {
-		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("不具备访问权限")))
-
+		s.Send(&Message{
+			FrameType: FrameData,
+			Data:      fmt.Sprintf("不具备访问权限"),
+		}, conn)
+		// conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("不具备访问权限")))
+		conn.Close()
 		return
 	}
 
@@ -75,7 +85,7 @@ func (s *Server) ServerWs(w http.ResponseWriter, r *http.Request) {
 }
 
 // 处理请求
-func (s *Server) handleConn(conn *websocket.Conn) {
+func (s *Server) handleConn(conn *Conn) {
 	for {
 		// 获取请求消息
 		_, msg, err := conn.ReadMessage()
@@ -85,6 +95,7 @@ func (s *Server) handleConn(conn *websocket.Conn) {
 			return
 		}
 
+		// 解析消息
 		var message Message
 		if err = json.Unmarshal(msg, &message); err != nil {
 			s.Errorf("websocket unmarshal message err %v, msg %s", err, msg)
@@ -92,38 +103,56 @@ func (s *Server) handleConn(conn *websocket.Conn) {
 			return
 		}
 
-		// 根据请求的method分发对应的路由
-		if handler, ok := s.routes[message.Method]; ok {
-			handler(s, conn, &message)
-		} else {
-			conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("不存在执行的方法: %s，请检查", message.Method)))
+		switch message.FrameType {
+		case FramePing:
+			s.Send(&Message{
+				FrameType: FramePing}, conn)
+		case FrameData:
+			// 根据请求的method分发对应的路由
+			if handler, ok := s.routes[message.Method]; ok {
+				handler(s, conn, &message)
+			} else {
+				s.Send(&Message{
+					FrameType: FrameData,
+					Data:      fmt.Sprintf("不存在执行的方法: %s，请检查", message.Method),
+				}, conn)
+
+				// conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("不存在执行的方法: %s，请检查", message.Method)))
+			}
+
 		}
+
 	}
 }
 
-func (s *Server) addConn(conn *websocket.Conn, req *http.Request) {
+func (s *Server) addConn(conn *Conn, req *http.Request) {
 	uid := s.authentication.UserId(req)
 
 	s.RWMutex.Lock()
 	defer s.RWMutex.Unlock()
+
+	// 如果用户已经存在，则关闭之前的连接
+	if c := s.userToConn[uid]; c != nil {
+		s.Close(c)
+	}
 
 	s.connToUser[conn] = uid
 	s.userToConn[uid] = conn
 }
 
 // 根据用户id获取连接
-func (s *Server) GetConn(uid string) *websocket.Conn {
+func (s *Server) GetConn(uid string) *Conn {
 	s.RWMutex.RLock()
 	defer s.RWMutex.RUnlock()
 
 	return s.userToConn[uid]
 }
 
-func (s *Server) GetConns(uids ...string) []*websocket.Conn {
+func (s *Server) GetConns(uids ...string) []*Conn {
 	s.RWMutex.RLock()
 	defer s.RWMutex.RUnlock()
 
-	var conns []*websocket.Conn
+	var conns []*Conn
 	for _, uid := range uids {
 		if conn, ok := s.userToConn[uid]; ok {
 			conns = append(conns, conn)
@@ -141,7 +170,7 @@ func (s *Server) SendByUserId(msg interface{}, sendIds ...string) error {
 	return s.Send(msg, s.GetConns(sendIds...)...)
 }
 
-func (s *Server) Send(msg interface{}, conns ...*websocket.Conn) error {
+func (s *Server) Send(msg interface{}, conns ...*Conn) error {
 	if len(conns) == 0 {
 		return nil
 	}
@@ -160,14 +189,14 @@ func (s *Server) Send(msg interface{}, conns ...*websocket.Conn) error {
 }
 
 // 根据连接获取用户
-func (s *Server) GetUser(conn *websocket.Conn) string {
+func (s *Server) GetUser(conn *Conn) string {
 	s.RWMutex.RLock()
 	defer s.RWMutex.RUnlock()
 
 	return s.connToUser[conn]
 }
 
-func (s *Server) GetUsers(conns ...*websocket.Conn) []string {
+func (s *Server) GetUsers(conns ...*Conn) []string {
 	s.RWMutex.RLock()
 	defer s.RWMutex.RUnlock()
 
@@ -188,7 +217,7 @@ func (s *Server) GetUsers(conns ...*websocket.Conn) []string {
 	return users
 }
 
-func (s *Server) Close(conn *websocket.Conn) {
+func (s *Server) Close(conn *Conn) {
 	s.RWMutex.Lock()
 	defer s.RWMutex.Unlock()
 
