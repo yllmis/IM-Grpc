@@ -12,7 +12,7 @@ import (
 	"github.com/zeromicro/go-zero/core/conf"
 )
 
-var configFile = flag.String("f", "etc/dev/im.yaml", "the config file")
+var configFile = flag.String("f", "etc/dev/im copy.yaml", "the config file")
 
 func main() {
 	flag.Parse()
@@ -26,7 +26,7 @@ func main() {
 	ctx := svc.NewServiceContext(c)
 	srv := websocket.NewServer(c.ListenOn,
 		websocket.WithAuthentication(handler.NewJwtAuth(ctx)),
-		websocket.WithMaxIdleConnectionIdle(10*time.Second),
+		websocket.WithMaxIdleConnectionIdle(1000*time.Second),
 	)
 	defer srv.Stop()
 

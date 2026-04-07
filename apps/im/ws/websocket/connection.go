@@ -11,6 +11,8 @@ import (
 type Conn struct {
 	idleMu sync.Mutex
 
+	Uid string
+
 	*websocket.Conn
 	s *Server
 
