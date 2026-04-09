@@ -33,7 +33,7 @@ func (c *Conversation) SingleConversation(data *ws.Chat, userId string) error {
 	// 记录消息
 	chatLog := &immodels.ChatLog{
 		ConversationId: data.ConversationId,
-		SendId:         data.SendId,
+		SendId:         userId,
 		RecvId:         data.RecvId,
 		ChatType:       data.ChatType,
 		MsgFrom:        0,

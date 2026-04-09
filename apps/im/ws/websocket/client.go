@@ -31,10 +31,7 @@ func NewClient(host string, opts ...DailOptions) *client {
 		opt:  opt,
 	}
 
-	conn, err := c.dail()
-	if err != nil {
-		return nil
-	}
+	conn, _ := c.dail()
 
 	c.Conn = conn
 
@@ -53,9 +50,11 @@ func (c *client) Send(v any) error {
 		return err
 	}
 
-	err = c.WriteMessage(websocket.TextMessage, data)
-	if err != nil {
-		return err
+	if c.Conn != nil {
+		err = c.WriteMessage(websocket.TextMessage, data)
+		if err == nil {
+			return nil
+		}
 	}
 
 	// todo: 重连发送
