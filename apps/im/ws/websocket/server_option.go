@@ -31,7 +31,7 @@ func WithAuthentication(auth Authentication) ServerOptions {
 	}
 }
 
-func WithServePattern(patten string) ServerOptions {
+func WithServePatten(patten string) ServerOptions {
 	return func(opt *serverOption) {
 		opt.patten = patten
 	}
