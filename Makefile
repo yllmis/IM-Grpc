@@ -13,4 +13,4 @@ social-api-dev:
 release-test: user-rpc-dev user-api-dev social-rpc-dev social-api-dev
 
 install-server: 
-	cd ./deploy/script && chmod +x release-test.sh && ./release-test.sh
+	cd ./deploy/script && chmod +x release-test.sh && bash ./release-test.sh
