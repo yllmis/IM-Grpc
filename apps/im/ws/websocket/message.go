@@ -1,11 +1,15 @@
 package websocket
 
+import "time"
+
 type FrameType uint8
 
 const (
-	FrameData FrameType = 0x0
-	FramePing FrameType = 0x1
-	FrameErr  FrameType = 0x9 // 返回给前端
+	FrameData  FrameType = 0x0
+	FramePing  FrameType = 0x1
+	FrameAck   FrameType = 0x2
+	FraneNoAck FrameType = 0x3
+	FrameErr   FrameType = 0x9 // 返回给前端
 	// FrameHeaders      FrameType = 0x1
 	// FramePriority     FrameType = 0x2
 	// FrameRSTStream    FrameType = 0x3
@@ -17,8 +21,13 @@ const (
 	// FrameContinuation FrameType = 0x9
 )
 
+// msg, id, seq
 type Message struct {
 	FrameType `json:"frameType"`
+	Id        string      `json:"id"`
+	AckSeq    int         `json:"ackSeq"`
+	ackTime   time.Time   `json:"ackTime"`
+	errCount  int         `json:"errCount"` // 消息重试次数，超过一定次数则丢弃
 	Method    string      `json:"method"`
 	FormId    string      `json:"formId"`
 	Data      interface{} // map[string]interface{}

@@ -6,10 +6,29 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/zeromicro/go-zero/core/logx"
 )
+
+type AckType int
+
+const (
+	NoAck    AckType = iota // 不需要ack确认
+	OnlyAck                 // 只需要ack确认，不需要重传，直接从消息队列中删除
+	RigorAck                // 需要ack确认，且需要重传，直到收到ack确认才从消息队列中删除
+)
+
+func (t AckType) ToString() string {
+	switch t {
+	case OnlyAck:
+		return "OnlyAck"
+	case RigorAck:
+		return "RigorAck"
+	}
+	return "NoAck"
+}
 
 type Server struct {
 	sync.RWMutex
@@ -90,6 +109,12 @@ func (s *Server) handleConn(conn *Conn) {
 	uids := s.GetUsers(conn)
 	conn.Uid = uids[0]
 
+	go s.handleWrite(conn)
+
+	if s.isAck(nil) {
+		go s.readAck(conn)
+	}
+
 	for {
 		// 获取请求消息
 		_, msg, err := conn.ReadMessage()
@@ -102,31 +127,196 @@ func (s *Server) handleConn(conn *Conn) {
 		// 解析消息
 		var message Message
 		if err = json.Unmarshal(msg, &message); err != nil {
-			s.Errorf("websocket unmarshal message err %v, msg %s", err, msg)
+			s.Errorf("websocket unmarshal message err %v, msg %s", err, string(msg))
 			s.Close(conn)
 			return
 		}
 
-		switch message.FrameType {
-		case FramePing:
-			s.Send(&Message{
-				FrameType: FramePing}, conn)
-		case FrameData:
-			// 根据请求的method分发对应的路由
-			if handler, ok := s.routes[message.Method]; ok {
-				handler(s, conn, &message)
-			} else {
-				s.Send(&Message{
-					FrameType: FrameData,
-					Data:      fmt.Sprintf("不存在执行的方法: %s，请检查", message.Method),
-				}, conn)
+		// todo: 给客户端回复ack消息，告知消息已被处理
 
-				// conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("不存在执行的方法: %s，请检查", message.Method)))
+		// 根据消息处理请求
+		if s.isAck(&message) {
+			// 需要ack确认的消息，放入消息队列，等待ack确认
+			s.Infof("conn message read ack msg %v", message)
+			conn.appendMsgMq(&message)
+		} else {
+			conn.message <- &message
+		}
+	}
+}
+
+func (s *Server) isAck(message *Message) bool {
+
+	if message == nil {
+		return s.opt.ack != NoAck
+	}
+
+	return s.opt.ack != NoAck && message.FrameType != FrameAck
+}
+
+// 读取的ack确认
+func (s *Server) readAck(conn *Conn) {
+
+	send := func(msg *Message, conn *Conn) error {
+		err := s.Send(msg, conn)
+		if err == nil {
+			return nil
+		}
+
+		s.Errorf("message ack OnlyAck send err %v messgae %v", err, msg)
+		conn.readMessage[0].errCount++
+		conn.MessageMu.Unlock()
+
+		tempDelay := time.Duration(200*conn.readMessage[0].errCount) * time.Microsecond // 线性退避
+		if max := 1 * time.Second; tempDelay > max {                                    // 最大退避时间为1秒
+			tempDelay = max
+		}
+
+		time.Sleep(tempDelay)
+		return err
+	}
+
+	for {
+		select {
+		case <-conn.done:
+			// 连接已关闭，退出处理
+			s.Infof("close message ack uid %v", conn.Uid)
+			return
+		default:
+		}
+
+		conn.MessageMu.Lock()
+		if len(conn.readMessage) == 0 {
+			conn.MessageMu.Unlock()
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+
+		// 取出消息队列中的第一条消息，等待ack确认
+		message := conn.readMessage[0]
+		if message.errCount > s.opt.sendErrCount {
+			// 超过最大重试次数，放弃发送
+			s.Infof("conn send fail,message %v,ackType %v, maxSendErrCount %v", message, s.opt.ack.ToString(), s.opt.sendErrCount)
+			conn.MessageMu.Unlock()
+			delete(conn.readMessageReq, message.Id)
+			conn.readMessage = conn.readMessage[1:]
+			continue
+		}
+
+		// 判断ack的方式
+		switch s.opt.ack {
+		case OnlyAck:
+			// 直接给客户端发送消息
+			if err := send(&Message{
+				FrameType: FrameAck,
+				Id:        message.Id,
+				AckSeq:    message.AckSeq + 1,
+			}, conn); err != nil {
+				continue
+			}
+			// 只需要ack确认，不需要重传，直接从消息队列中删除
+			conn.readMessage = conn.readMessage[1:]
+			conn.MessageMu.Unlock()
+
+			conn.message <- message
+		case RigorAck:
+			// 先回
+			if message.AckSeq == 0 {
+				// 还未确认
+				conn.readMessage[0].AckSeq++
+				conn.readMessage[0].ackTime = time.Now()
+				if err := send(&Message{
+					FrameType: FrameAck,
+					Id:        message.Id,
+					AckSeq:    message.AckSeq,
+				}, conn); err != nil {
+					continue
+				}
+				s.Infof("message ack RigorAck send mid %v, seq %v, time %v", message.Id, message.AckSeq, message.ackTime)
+				conn.MessageMu.Unlock()
+				continue
 			}
 
+			// 再验证
+			// 1.客户端返回结果，再一次确认
+			// 得到客户端的序号
+			msgSeq := conn.readMessageReq[message.Id]
+			if msgSeq.AckSeq > message.AckSeq {
+				// 已经收到过ack确认了，说明消息已经被处理了，直接从消息队列中删除
+				conn.readMessage = conn.readMessage[1:]
+				conn.MessageMu.Unlock()
+				conn.message <- message
+				s.Infof("message ack RigorAck success mid %v, seq %v", message.Id, message.AckSeq)
+				continue
+			}
+
+			// 2.客户端没有确认，是否超时
+			val := s.opt.ackTimeout - time.Since(message.ackTime)
+			if !message.ackTime.IsZero() && val <= 0 {
+				// 2.1 超时
+				delete(conn.readMessageReq, message.Id)
+				conn.readMessage = conn.readMessage[1:]
+				conn.MessageMu.Unlock()
+				s.Infof("message ack RigorAck timeout mid %v, seq %v", message.Id, message.AckSeq)
+				continue
+			}
+			// 2.2 未超时，重新发送
+			conn.MessageMu.Unlock()
+			if val > 0 && val > 300*time.Microsecond {
+				if err := send(&Message{
+					FrameType: FrameAck,
+					Id:        message.Id,
+					AckSeq:    message.AckSeq,
+				}, conn); err != nil {
+					continue
+				}
+			}
+			// 睡眠一定的时间
+			time.Sleep(300 * time.Microsecond)
 		}
 
 	}
+
+}
+
+// 任务的处理
+func (s *Server) handleWrite(conn *Conn) {
+	for {
+		select {
+		case <-conn.done:
+			// 连接已关闭，退出处理
+			return
+		case message := <-conn.message:
+			// 根据消息类型处理请求
+			switch message.FrameType {
+			case FramePing:
+				s.Send(&Message{
+					FrameType: FramePing}, conn)
+			case FrameData:
+				// 根据请求的method分发对应的路由
+				if handler, ok := s.routes[message.Method]; ok {
+					handler(s, conn, message)
+				} else {
+					s.Send(&Message{
+						FrameType: FrameData,
+						Data:      fmt.Sprintf("不存在执行的方法: %s，请检查", message.Method),
+					}, conn)
+
+					// conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("不存在执行的方法: %s，请检查", message.Method)))
+				}
+
+			}
+
+			if s.isAck(message) {
+				// 删除消息记录
+				conn.MessageMu.Lock()
+				delete(conn.readMessageReq, message.Id)
+				conn.MessageMu.Unlock()
+			}
+		}
+
+	}
+
 }
 
 func (s *Server) addConn(conn *Conn, req *http.Request) {

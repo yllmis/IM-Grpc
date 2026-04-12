@@ -16,6 +16,13 @@ type Conn struct {
 	*websocket.Conn
 	s *Server
 
+	// 消息队列
+	MessageMu      sync.Mutex
+	readMessage    []*Message
+	readMessageReq map[string]*Message
+
+	message chan *Message // 消息通道，在ack验证完成后将消息投递与writeHandler处理。
+
 	idle              time.Time
 	maxConnectionIdle time.Duration
 
@@ -34,6 +41,9 @@ func NewConn(s *Server, w http.ResponseWriter, r *http.Request) *Conn {
 		s:                 s,
 		idle:              time.Now(),
 		maxConnectionIdle: s.opt.maxIdleConnection,
+		readMessage:       make([]*Message, 0, 2),
+		readMessageReq:    make(map[string]*Message, 2),
+		message:           make(chan *Message, 1), // 减少阻塞情况，保证数据的顺序性
 		done:              make(chan struct{}),
 	}
 
@@ -66,6 +76,35 @@ func (c *Conn) WriteMessage(messageType int, data []byte) error {
 	c.idle = time.Now()
 
 	return nil
+}
+
+// 将消息添加到消息队列中，等待发送
+func (c *Conn) appendMsgMq(msg *Message) {
+	c.MessageMu.Lock()
+	defer c.MessageMu.Unlock()
+
+	// 该消息 ID 已存在（处理重复消息或更新状态）
+	if m, ok := c.readMessageReq[msg.Id]; ok {
+		if len(c.readMessage) == 0 {
+			return
+		}
+
+		if m.AckSeq >= msg.AckSeq {
+			// 收到过期或重复的消息（乱序重传），直接丢弃
+			return
+		}
+		c.readMessageReq[msg.Id] = msg
+		return
+	}
+
+	// 没有ack确认消息
+	if msg.FrameType == FrameAck {
+		// 防止重发
+		return
+	}
+
+	c.readMessage = append(c.readMessage, msg)
+	c.readMessageReq[msg.Id] = msg
 }
 
 func (c *Conn) Close() error {
