@@ -11,11 +11,17 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+)
+
+var (
+	DefaultChatLogLimit int64 = 100
 )
 
 type chatLogModel interface {
 	Insert(ctx context.Context, data *ChatLog) error
 	FindOne(ctx context.Context, id string) (*ChatLog, error)
+	ListBySendTime(ctx context.Context, conversationId string, startSendTime, endSendTime, limit int64) ([]*ChatLog, error)
 	Update(ctx context.Context, data *ChatLog) (*mongo.UpdateResult, error)
 	Delete(ctx context.Context, id string) (int64, error)
 }
@@ -51,6 +57,45 @@ func (m *defaultChatLogModel) FindOne(ctx context.Context, id string) (*ChatLog,
 	switch err {
 	case nil:
 		return &data, nil
+	case mon.ErrNotFound:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
+}
+
+// 查询聊天记录
+// conversationId: 会话ID startSendTime: 起始发送时间 endSendTime: 结束发送时间 limit: 查询条数(便于分页)
+func (m *defaultChatLogModel) ListBySendTime(ctx context.Context, conversationId string, startSendTime, endSendTime, limit int64) ([]*ChatLog, error) {
+	var data []*ChatLog
+
+	opt := options.Find().SetLimit(DefaultChatLogLimit).SetSort(bson.M{
+		"sendTime": -1,
+	})
+
+	filter := bson.M{
+		"conversationId": conversationId,
+	}
+	if endSendTime > 0 {
+		// startSendTime > x endSendTime
+		filter["sendTime"] = bson.M{
+			"$gt":  startSendTime,
+			"$lte": endSendTime,
+		}
+	} else {
+		filter["sendTime"] = bson.M{
+			"$lt": startSendTime,
+		}
+	}
+
+	if limit > 0 {
+		opt.SetLimit(limit)
+	}
+
+	err := m.conn.Find(ctx, &data, filter, opt)
+	switch err {
+	case nil:
+		return data, nil
 	case mon.ErrNotFound:
 		return nil, ErrNotFound
 	default:
