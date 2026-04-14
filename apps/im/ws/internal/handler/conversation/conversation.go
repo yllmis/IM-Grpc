@@ -8,7 +8,6 @@ import (
 	"github.com/IM_System/apps/im/ws/ws"
 	"github.com/IM_System/apps/task/mq/mq"
 	"github.com/IM_System/pkg/constants"
-	"github.com/IM_System/pkg/wuid"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -22,10 +21,6 @@ func Chat(svc *svc.ServiceContext) websocket.HandlerFunc {
 		}
 		switch data.ChatType {
 		case constants.SingleChatType:
-			if data.ConversationId == "" {
-				data.ConversationId = wuid.CombineId(conn.Uid, data.RecvId)
-			}
-
 			err := svc.MsgChatTransferClient.Push(&mq.MsgChatTransfer{
 				ConversationId: data.ConversationId,
 				SendId:         conn.Uid,

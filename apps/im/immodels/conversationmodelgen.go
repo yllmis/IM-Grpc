@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/zeromicro/go-zero/core/stores/mon"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -32,7 +31,7 @@ func newDefaultConversationModel(conn *mon.Model) *defaultConversationModel {
 
 func (m *defaultConversationModel) Insert(ctx context.Context, data *Conversation) error {
 	if data.ID.IsZero() {
-		data.ID = primitive.ObjectID(bson.NewObjectID())
+		data.ID = bson.NewObjectID()
 		data.CreateAt = time.Now()
 		data.UpdateAt = time.Now()
 	}
@@ -42,14 +41,10 @@ func (m *defaultConversationModel) Insert(ctx context.Context, data *Conversatio
 }
 
 func (m *defaultConversationModel) FindOne(ctx context.Context, id string) (*Conversation, error) {
-	oid, err := bson.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, ErrInvalidObjectId
-	}
 
 	var data Conversation
 
-	err = m.conn.FindOne(ctx, &data, bson.M{"_id": oid})
+	err := m.conn.FindOne(ctx, &data, bson.M{"conversationId": id})
 	switch err {
 	case nil:
 		return &data, nil

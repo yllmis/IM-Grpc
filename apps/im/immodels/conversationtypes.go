@@ -4,11 +4,11 @@ import (
 	"time"
 
 	"github.com/IM_System/pkg/constants"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type Conversation struct {
-	ID primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	ID bson.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 
 	ConversationId string             `bson:"conversationId,omitempty"`
 	ChatType       constants.ChatType `bson:"chatType,omitempty"`

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/zeromicro/go-zero/core/stores/mon"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -36,7 +35,7 @@ func newDefaultChatLogModel(conn *mon.Model) *defaultChatLogModel {
 
 func (m *defaultChatLogModel) Insert(ctx context.Context, data *ChatLog) error {
 	if data.ID.IsZero() {
-		data.ID = primitive.ObjectID(bson.NewObjectID())
+		data.ID = bson.NewObjectID()
 		data.CreateAt = time.Now()
 		data.UpdateAt = time.Now()
 	}
@@ -53,7 +52,7 @@ func (m *defaultChatLogModel) FindOne(ctx context.Context, id string) (*ChatLog,
 
 	var data ChatLog
 
-	err = m.conn.FindOne(ctx, &data, bson.M{"_id": primitive.ObjectID(oid)})
+	err = m.conn.FindOne(ctx, &data, bson.M{"_id": oid})
 	switch err {
 	case nil:
 		return &data, nil
@@ -106,7 +105,7 @@ func (m *defaultChatLogModel) ListBySendTime(ctx context.Context, conversationId
 func (m *defaultChatLogModel) Update(ctx context.Context, data *ChatLog) (*mongo.UpdateResult, error) {
 	data.UpdateAt = time.Now()
 
-	res, err := m.conn.UpdateOne(ctx, bson.M{"_id": bson.ObjectID(data.ID)}, bson.M{"$set": data})
+	res, err := m.conn.UpdateOne(ctx, bson.M{"_id": data.ID}, bson.M{"$set": data})
 	return res, err
 }
 
@@ -116,6 +115,6 @@ func (m *defaultChatLogModel) Delete(ctx context.Context, id string) (int64, err
 		return 0, ErrInvalidObjectId
 	}
 
-	res, err := m.conn.DeleteOne(ctx, bson.M{"_id": primitive.ObjectID(oid)})
+	res, err := m.conn.DeleteOne(ctx, bson.M{"_id": oid})
 	return res, err
 }
