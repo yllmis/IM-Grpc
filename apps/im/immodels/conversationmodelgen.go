@@ -50,6 +50,7 @@ func (m *defaultConversationModel) FindOne(ctx context.Context, id string) (*Con
 		return &data, nil
 	case mon.ErrNotFound:
 		return nil, ErrNotFound
+
 	default:
 		return nil, err
 	}
