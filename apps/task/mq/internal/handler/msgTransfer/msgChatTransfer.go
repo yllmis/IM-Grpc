@@ -7,6 +7,7 @@ import (
 
 	"github.com/IM_System/apps/im/immodels"
 	"github.com/IM_System/apps/im/ws/websocket"
+	"github.com/IM_System/apps/social/rpc/social"
 	"github.com/IM_System/apps/task/mq/internal/svc"
 	"github.com/IM_System/apps/task/mq/mq"
 	"github.com/IM_System/pkg/constants"
@@ -41,7 +42,44 @@ func (m *MsgChatTransfer) Consume(ctx context.Context, key, value string) error 
 		return err
 	}
 
+	switch data.ChatType {
+	case constants.SingleChatType:
+		return m.single(&data)
+	case constants.GroupChatType:
+		return m.group(ctx, &data)
+	}
+	return nil
+}
+
+func (m *MsgChatTransfer) single(data *mq.MsgChatTransfer) error {
+	// 私聊推送
 	// 推送消息
+	return m.svc.WsClient.Send(websocket.Message{
+		FrameType: websocket.FrameData,
+		Method:    "push",
+		FormId:    constants.SYSTEM_ROOT_ID,
+		Data:      data,
+	})
+}
+
+func (m *MsgChatTransfer) group(ctx context.Context, data *mq.MsgChatTransfer) error {
+	// 群聊推送
+	// 获取群成员列表
+	users, err := m.svc.Social.Groupusers(ctx, &social.GroupusersReq{
+		GroupId: data.RecvId,
+	})
+	if err != nil {
+		return err
+	}
+
+	data.RecvIds = make([]string, 0, len((users.List)))
+	for _, members := range users.List {
+		if members.UserId == data.SendId {
+			continue
+		}
+		data.RecvIds = append(data.RecvIds, members.UserId)
+	}
+
 	return m.svc.WsClient.Send(websocket.Message{
 		FrameType: websocket.FrameData,
 		Method:    "push",

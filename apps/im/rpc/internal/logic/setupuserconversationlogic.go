@@ -68,8 +68,13 @@ func (l *SetUpUserConversationLogic) SetUpUserConversation(in *im.SetUpUserConve
 		}
 	case constants.GroupChatType:
 		// 群聊，建立群成员的会话
-
+		// 群id，创建者id，群id
+		err := l.setUpUserConversation(in.RecvId, in.SendId, in.RecvId, constants.GroupChatType, true)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return &im.SetUpUserConversationResp{}, nil
 }
 

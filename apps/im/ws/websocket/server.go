@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/threading"
 )
 
 type AckType int
@@ -39,6 +40,9 @@ type Server struct {
 	patten         string
 	opt            *serverOption
 
+	// 并发处理
+	*threading.TaskRunner
+
 	// 连接管理
 	connToUser map[*Conn]string
 	userToConn map[string]*Conn
@@ -63,7 +67,8 @@ func NewServer(addr string, opts ...ServerOptions) *Server {
 		connToUser: make(map[*Conn]string),
 		userToConn: make(map[string]*Conn),
 
-		Logger: logx.WithContext(context.Background()),
+		Logger:     logx.WithContext(context.Background()),
+		TaskRunner: threading.NewTaskRunner(opt.concurrency),
 	}
 }
 

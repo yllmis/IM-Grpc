@@ -5,9 +5,11 @@ import (
 
 	"github.com/IM_System/apps/im/immodels"
 	"github.com/IM_System/apps/im/ws/websocket"
+	"github.com/IM_System/apps/social/rpc/socialclient"
 	"github.com/IM_System/apps/task/mq/internal/config"
 	"github.com/IM_System/pkg/constants"
 	"github.com/zeromicro/go-zero/core/stores/redis"
+	"github.com/zeromicro/go-zero/zrpc"
 )
 
 type ServiceContext struct {
@@ -20,6 +22,8 @@ type ServiceContext struct {
 	immodels.ChatLogModel
 
 	immodels.ConversationModel
+
+	socialclient.Social
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -31,6 +35,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		ChatLogModel: immodels.MustChatLogModel(c.Mongo.Url, c.Mongo.Db),
 
 		ConversationModel: immodels.MustConversationModel(c.Mongo.Url, c.Mongo.Db),
+
+		Social: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc)),
 	}
 
 	token, err := svc.GetSystemToken()

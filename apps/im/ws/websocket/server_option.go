@@ -15,6 +15,8 @@ type serverOption struct {
 	patten string
 
 	maxIdleConnection time.Duration
+
+	concurrency int
 }
 
 func newServerOptions(opts ...ServerOptions) serverOption {
@@ -24,6 +26,7 @@ func newServerOptions(opts ...ServerOptions) serverOption {
 		ackTimeout:        defaultAckTimeout,
 		sendErrCount:      defaultSendErrCount,
 		patten:            "/ws",
+		concurrency:       defaultConcurrency,
 	}
 
 	// 依次调用每个 option 函数来修改 serverOption 的值
