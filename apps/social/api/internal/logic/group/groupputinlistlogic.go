@@ -8,6 +8,8 @@ import (
 
 	"github.com/IM_System/apps/social/api/internal/svc"
 	"github.com/IM_System/apps/social/api/internal/types"
+	"github.com/IM_System/apps/social/rpc/social"
+	"github.com/jinzhu/copier"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -30,5 +32,12 @@ func NewGroupPutInListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Gr
 func (l *GroupPutInListLogic) GroupPutInList(req *types.GroupPutInListRep) (resp *types.GroupPutInListResp, err error) {
 	// todo: add your logic here and delete this line
 
-	return
+	list, err := l.svcCtx.SocialRpc.GroupPutinList(l.ctx, &social.GroupPutinListReq{
+		GroupId: req.GroupId,
+	})
+
+	var respList []*types.GroupRequests
+	copier.Copy(&respList, list.GroupReqs)
+
+	return &types.GroupPutInListResp{List: respList}, nil
 }

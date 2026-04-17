@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"sync"
 
 	"github.com/edwingeng/wuid/mysql/wuid"
 )
@@ -23,10 +24,16 @@ func Init(dsn string) {
 	_ = w.LoadH28FromMysql(newDB, "wuid")
 }
 
+var (
+	once sync.Once
+)
+
 func GenUid(dsn string) string {
-	if w == nil {
+	// once.Do 保证了无论多少个并发请求砸过来，Init(dsn) 都只会被执行一次
+	// 并且其他并发请求会在这里阻塞，直到 Init 执行完毕才会往下走
+	once.Do(func() {
 		Init(dsn)
-	}
+	})
 
 	return fmt.Sprintf("%#016x", w.Next())
 }
