@@ -5,8 +5,14 @@ import (
 
 	"github.com/IM_System/apps/social/rpc/internal/svc"
 	"github.com/IM_System/apps/social/rpc/social"
+	"github.com/IM_System/apps/social/socialmodels"
+	"github.com/IM_System/pkg/constants"
+	"github.com/IM_System/pkg/wuid"
+	"github.com/IM_System/pkg/xerr"
+	"github.com/pkg/errors"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type GroupCreateLogic struct {
@@ -26,5 +32,32 @@ func NewGroupCreateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Group
 func (l *GroupCreateLogic) GroupCreate(in *social.GroupCreateReq) (*social.GroupCreateResp, error) {
 	// todo: add your logic here and delete this line
 
-	return &social.GroupCreateResp{}, nil
+	groups := &socialmodels.Groups{
+		Id:         wuid.GenUid(l.svcCtx.Config.Mysql.DataSource),
+		Name:       in.Name,
+		Icon:       in.Icon,
+		CreatorUid: in.CreatorUid,
+		//IsVerify:   true,
+		IsVerify: false,
+	}
+
+	err := l.svcCtx.GroupsModel.Trans(l.ctx, func(ctx context.Context, session sqlx.Session) error {
+		_, err := l.svcCtx.GroupsModel.Insert(l.ctx, session, groups)
+
+		if err != nil {
+			return errors.Wrapf(xerr.NewDBErr(), "insert group err %v req %v", err, in)
+		}
+
+		_, err = l.svcCtx.GroupMembersModel.Insert(l.ctx, session, &socialmodels.GroupMembers{
+			GroupId:   groups.Id,
+			UserId:    in.CreatorUid,
+			RoleLevel: int(constants.CreatorGroupRoleLevel),
+		})
+		if err != nil {
+			return errors.Wrapf(err, "insert group member err %v req %v", err, in)
+		}
+		return nil
+	})
+
+	return &social.GroupCreateResp{}, err
 }

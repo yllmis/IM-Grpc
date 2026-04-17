@@ -2,9 +2,15 @@ package logic
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/IM_System/apps/social/rpc/internal/svc"
 	"github.com/IM_System/apps/social/rpc/social"
+	"github.com/IM_System/apps/social/socialmodels"
+	"github.com/IM_System/pkg/constants"
+	"github.com/IM_System/pkg/xerr"
+	"github.com/pkg/errors"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -27,5 +33,142 @@ func NewGroupPutinLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GroupP
 func (l *GroupPutinLogic) GroupPutin(in *social.GroupPutinReq) (*social.GroupPutinResp, error) {
 	// todo: add your logic here and delete this line
 
+	// 1. 普通用户申请 ： 如果群无验证直接进入
+	// 2. 群成员邀请： 如果群无验证直接进入
+	// 3. 群管理员/群创建者邀请：直接进入群
+
+	var (
+		inviteGroupMember *socialmodels.GroupMembers
+		userGroupMember   *socialmodels.GroupMembers
+		groupInfo         *socialmodels.Groups
+
+		err error
+	)
+
+	userGroupMember, err = l.svcCtx.GroupMembersModel.FindByGroupIdAndUserId(l.ctx, in.ReqId, in.GroupId)
+	if err != nil && err != socialmodels.ErrNotFound {
+		return nil, errors.Wrapf(xerr.NewDBErr(), "find group member by group id and user id err %v, req %v, %v", err,
+			in.GroupId, in.ReqId)
+	}
+	if userGroupMember != nil {
+		return &social.GroupPutinResp{}, nil
+	}
+
+	groupReq, err := l.svcCtx.GroupRequestsModel.FindByGroupIdAndReqId(l.ctx, in.GroupId, in.ReqId)
+	if err != nil && err != socialmodels.ErrNotFound {
+		return nil, errors.Wrapf(xerr.NewDBErr(), "find group req by group id and req id err %v, req %v, %v", err,
+			in.GroupId, in.ReqId)
+	}
+	if groupReq != nil {
+		return &social.GroupPutinResp{}, nil
+	}
+	groupReq = &socialmodels.GroupRequests{
+		ReqId:   in.ReqId,
+		GroupId: in.GroupId,
+		ReqMsg: sql.NullString{
+			String: in.ReqMsg,
+			Valid:  true,
+		},
+		ReqTime: sql.NullTime{
+			Time:  time.Unix(in.ReqTime, 0),
+			Valid: true,
+		},
+		JoinSource: sql.NullInt64{
+			Int64: int64(in.JoinSource),
+			Valid: true,
+		},
+		InviterUserId: sql.NullString{
+			String: in.InviterUid,
+			Valid:  true,
+		},
+		HandleResult: sql.NullInt64{
+			Int64: int64(constants.NoHandlerResult),
+			Valid: true,
+		},
+	}
+
+	creatGroupMember := func() {
+		if err != nil {
+			return
+		}
+
+		err = l.createGroupMember(in)
+	}
+
+	groupInfo, err = l.svcCtx.GroupsModel.FindOne(l.ctx, in.GroupId)
+	if err != nil {
+		return nil, errors.Wrapf(xerr.NewDBErr(), "find group info err %v, req %v, %v", err,
+			in.GroupId, in.ReqId)
+	}
+
+	// 验证是否要验证
+	if !groupInfo.IsVerify {
+		// 不需要验证直接进入
+		defer creatGroupMember()
+
+		groupReq.HandleResult = sql.NullInt64{
+			Int64: int64(constants.PassHandlerResult),
+			Valid: true,
+		}
+
+		return l.createGroupReq(groupReq, true)
+	}
+
+	// 验证进群方式
+	if constants.GroupJoinSource(in.JoinSource) == constants.PutInGroupJoinSource {
+		// 申请
+		return l.createGroupReq(groupReq, false)
+	}
+
+	inviteGroupMember, err = l.svcCtx.GroupMembersModel.FindByGroupIdAndUserId(l.ctx, in.InviterUid, in.GroupId)
+	if err != nil {
+		return nil, errors.Wrapf(xerr.NewDBErr(), "find group member by groud id and user id err %v, req %v", in.InviterUid, in.GroupId)
+	}
+
+	if constants.GroupRoleLevel(inviteGroupMember.RoleLevel) == constants.CreatorGroupRoleLevel || constants.GroupRoleLevel(inviteGroupMember.RoleLevel) == constants.ManagerGroupRoleLevel {
+		// 是管理者或创建者邀请直接进入
+		defer creatGroupMember()
+
+		groupReq.HandleResult = sql.NullInt64{
+			Int64: int64(constants.PassHandlerResult),
+			Valid: true,
+		}
+		groupReq.HandleUserId = sql.NullString{
+			String: in.InviterUid,
+			Valid:  true,
+		}
+		return l.createGroupReq(groupReq, true)
+	}
+
 	return &social.GroupPutinResp{}, nil
+}
+
+func (l *GroupPutinLogic) createGroupReq(groupReq *socialmodels.GroupRequests, isPass bool) (*social.GroupPutinResp, error) {
+	_, err := l.svcCtx.GroupRequestsModel.Insert(l.ctx, groupReq)
+	if err != nil {
+		return nil, errors.Wrapf(xerr.NewDBErr(), "insert group req err %v, req %v", err, groupReq)
+	}
+	if isPass {
+		return &social.GroupPutinResp{
+			GroupId: groupReq.GroupId,
+		}, nil
+	}
+
+	return &social.GroupPutinResp{}, nil
+}
+
+func (l *GroupPutinLogic) createGroupMember(in *social.GroupPutinReq) error {
+	groupMember := &socialmodels.GroupMembers{
+		GroupId:     in.GroupId,
+		UserId:      in.ReqId,
+		RoleLevel:   int(constants.AtLargeGroupRoleLevel),
+		OperatorUid: in.InviterUid,
+	}
+
+	_, err := l.svcCtx.GroupMembersModel.Insert(l.ctx, nil, groupMember)
+	if err != nil {
+		return errors.Wrapf(xerr.NewDBErr(), "insert friend err %v req %v", err, groupMember)
+	}
+
+	return nil
 }

@@ -946,6 +946,7 @@ func (x *GroupCreateReq) GetCreatorUid() string {
 
 type GroupCreateResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -978,6 +979,13 @@ func (x *GroupCreateResp) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GroupCreateResp.ProtoReflect.Descriptor instead.
 func (*GroupCreateResp) Descriptor() ([]byte, []int) {
 	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GroupCreateResp) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 type GroupPutinReq struct {
@@ -1583,8 +1591,9 @@ const file_apps_social_rpc_social_proto_rawDesc = "" +
 	"\x04icon\x18\x02 \x01(\tR\x04icon\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\x05R\x06status\x12\x1f\n" +
 	"\vcreator_uid\x18\x04 \x01(\tR\n" +
-	"creatorUid\"\x11\n" +
-	"\x0fGroupCreateResp\"\xb1\x01\n" +
+	"creatorUid\"!\n" +
+	"\x0fGroupCreateResp\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xb1\x01\n" +
 	"\rGroupPutinReq\x12\x18\n" +
 	"\agroupId\x18\x02 \x01(\tR\agroupId\x12\x14\n" +
 	"\x05reqId\x18\x03 \x01(\tR\x05reqId\x12\x16\n" +
