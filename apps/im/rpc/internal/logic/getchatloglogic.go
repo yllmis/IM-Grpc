@@ -47,6 +47,7 @@ func (l *GetChatLogLogic) GetChatLog(in *im.GetChatLogReq) (*im.GetChatLogResp, 
 					MsgContent:     chatLog.MsgContent,
 					ChatType:       int32(chatLog.ChatType),
 					SendTime:       chatLog.SendTime,
+					ReadRecords:    chatLog.ReadRecords,
 				},
 			},
 		}, nil
@@ -55,7 +56,7 @@ func (l *GetChatLogLogic) GetChatLog(in *im.GetChatLogReq) (*im.GetChatLogResp, 
 	// 时间段分段查询
 	data, err := l.svcCtx.ChatLogModel.ListBySendTime(l.ctx, in.ConversationId, in.StartSendTime, in.EndSendTime, in.Count)
 	if err != nil {
-		return nil, errors.Wrapf(xerr.NewDBErr(), "ListBySendTime err %v, req %v", err, in)
+		return nil, errors.Wrapf(xerr.NewDBErr(), "find chatlog list by SendTime err %v, req %v", err, in)
 	}
 
 	res := make([]*im.ChatLog, 0, len(data))
@@ -69,6 +70,7 @@ func (l *GetChatLogLogic) GetChatLog(in *im.GetChatLogReq) (*im.GetChatLogResp, 
 			MsgContent:     datum.MsgContent,
 			ChatType:       int32(datum.ChatType),
 			SendTime:       datum.SendTime,
+			ReadRecords:    datum.ReadRecords,
 		})
 	}
 	return &im.GetChatLogResp{

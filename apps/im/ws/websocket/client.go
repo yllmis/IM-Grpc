@@ -3,6 +3,7 @@ package websocket
 import (
 	"encoding/json"
 	"net/url"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -15,6 +16,8 @@ type Client interface {
 }
 
 type client struct {
+	mu sync.Mutex
+
 	*websocket.Conn
 
 	host string // 连接的 host 地址
@@ -50,11 +53,14 @@ func (c *client) Send(v any) error {
 		return err
 	}
 
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.Conn != nil {
 		err = c.WriteMessage(websocket.TextMessage, data)
 		if err == nil {
 			return nil
 		}
+		_ = c.Conn.Close()
 	}
 
 	// todo: 重连发送

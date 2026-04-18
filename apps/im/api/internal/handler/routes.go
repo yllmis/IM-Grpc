@@ -21,7 +21,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: getChatLogHandler(serverCtx),
 			},
 			{
-				Method:  http.MethodGet,
+				Method:  http.MethodPost,
 				Path:    "/chatlog/readRecords",
 				Handler: getChatLogReadRecordsHandler(serverCtx),
 			},
