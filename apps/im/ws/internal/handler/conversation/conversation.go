@@ -58,6 +58,15 @@ func MarkRead(svc *svc.ServiceContext) websocket.HandlerFunc {
 			return
 		}
 
+		if data.ConversationId == "" {
+			switch data.ChatType {
+			case constants.SingleChatType:
+				data.ConversationId = wuid.CombineId(conn.Uid, data.RecvId)
+			case constants.GroupChatType:
+				data.ConversationId = data.RecvId // 群聊的conversationId就是群id, RecvId是群id
+			}
+		}
+
 		err := svc.MsgReadTransferClient.Push(&mq.MsgMarkRead{
 			ConversationId: data.ConversationId,
 			SendId:         conn.Uid,

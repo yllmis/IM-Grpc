@@ -27,4 +27,10 @@ type Config struct {
 	Ws struct {
 		Host string
 	}
+
+	MsgReadHandler struct {
+		GroupMsgReadHandler          int
+		GroupMsgReadRecordDelayTime  int64
+		GroupMsgReadRecordDelayCount int
+	}
 }
