@@ -10,8 +10,8 @@ RUN echo -e "https://mirrors.aliyun.com/alpine/v3.15/main\nhttps://mirrors.aliyu
 ENV TZ=Asia/Shanghai
 
 # 声明属性变量（只在dockerfile中生效）
-ARG SERVER_NAME=social
-ARG SERVER_TYPE=api
+ARG SERVER_NAME=im
+ARG SERVER_TYPE=rpc
 
 # 声明环境变量（在dockerfile和容器中都生效）
 ENV RUN_BIN="bin/${SERVER_NAME}-${SERVER_TYPE}"
@@ -35,4 +35,4 @@ WORKDIR /$SERVER_NAME
 #ENTRYPOINT[“SRUN_BIN”，"-f”，“$RUN_CONF"] I/ 这种写法不支持对环境变量的解析。
 #您正在使用ENTRYPOINT 的exec形式。与sheLL表单不同，eXec表单不会调用命令sheLL。这意味着正常的外壳处理不会发生。例如，ENTRYPOINT ["eChO","$HOME"]
 #将不会在S HOME上进行变量替换。如果要进行sheLL处理，则可以使用sheLL形式或直接执行sheLL，例如：ENTRYPOINT 【“sh"，"-C"，“echo SHOME"]。
-ENTRYPOINT $RUN_BIN -f $RUN_CONF
+ENTRYPOINT ["sh", "-c", "$RUN_BIN -f $RUN_CONF"]

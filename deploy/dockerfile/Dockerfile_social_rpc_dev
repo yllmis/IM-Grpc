@@ -35,4 +35,4 @@ WORKDIR /$SERVER_NAME
 #ENTRYPOINT[“SRUN_BIN”，"-f”，“$RUN_CONF"] I/ 这种写法不支持对环境变量的解析。
 #您正在使用ENTRYPOINT 的exec形式。与sheLL表单不同，eXec表单不会调用命令sheLL。这意味着正常的外壳处理不会发生。例如，ENTRYPOINT ["eChO","$HOME"]
 #将不会在S HOME上进行变量替换。如果要进行sheLL处理，则可以使用sheLL形式或直接执行sheLL，例如：ENTRYPOINT 【“sh"，"-C"，“echo SHOME"]。
-ENTRYPOINT ["sh", "-c", "$RUN_BIN -f $RUN_CONF"]
+ENTRYPOINT $RUN_BIN -f $RUN_CONF
