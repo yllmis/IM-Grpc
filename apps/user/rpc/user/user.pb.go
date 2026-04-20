@@ -249,6 +249,7 @@ func (x *LoginReq) GetPassword() string {
 
 type LoginResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
 	Token         string                 `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"`
 	Expire        int64                  `protobuf:"varint,2,opt,name=expire,proto3" json:"expire,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -283,6 +284,13 @@ func (x *LoginResp) ProtoReflect() protoreflect.Message {
 // Deprecated: Use LoginResp.ProtoReflect.Descriptor instead.
 func (*LoginResp) Descriptor() ([]byte, []int) {
 	return file_apps_user_rpc_user_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *LoginResp) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 func (x *LoginResp) GetToken() string {
@@ -638,8 +646,9 @@ const file_apps_user_rpc_user_proto_rawDesc = "" +
 	"\x04pong\x18\x01 \x01(\tR\x04pong\"<\n" +
 	"\bLoginReq\x12\x14\n" +
 	"\x05phone\x18\x01 \x01(\tR\x05phone\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"9\n" +
-	"\tLoginResp\x12\x14\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"I\n" +
+	"\tLoginResp\x12\x0e\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\x12\x14\n" +
 	"\x05Token\x18\x01 \x01(\tR\x05Token\x12\x16\n" +
 	"\x06expire\x18\x02 \x01(\x03R\x06expire\"\x85\x01\n" +
 	"\vRegisterReq\x12\x14\n" +

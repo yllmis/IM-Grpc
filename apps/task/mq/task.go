@@ -11,7 +11,7 @@ import (
 	"github.com/zeromicro/go-zero/core/service"
 )
 
-var configFile = flag.String("f", "etc/dev/task copy.yaml", "the config file")
+var configFile = flag.String("f", "etc/dev/task.yaml", "the config file")
 
 func main() {
 	flag.Parse()

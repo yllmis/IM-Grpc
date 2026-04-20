@@ -10,6 +10,13 @@ type FriendListResp struct {
 	List []*Friends `json:"list"`
 }
 
+type FriendOnlineReq struct {
+}
+
+type FriendOnlineResp struct {
+	OnlineList map[string]bool `json:"onlineList"`
+}
+
 type FriendPutInHandleReq struct {
 	FriendReqId  int32 `json:"friend_req_id,omitempty"`
 	HandleResult int32 `json:"handle_result,omitempty"` // 处理结果
@@ -76,6 +83,14 @@ type GroupMembers struct {
 	RoleLevel     int    `json:"role_level,omitempty"`
 	InviterUid    string `json:"inviter_uid,omitempty"`
 	OperatorUid   string `json:"operator_uid,omitempty"`
+}
+
+type GroupOnlineReq struct {
+	GroupId string `json:"group_id,omitempty"`
+}
+
+type GroupOnlineResp struct {
+	OnlineList map[string]bool `json:"onlineList"`
 }
 
 type GroupPutInHandleRep struct {
