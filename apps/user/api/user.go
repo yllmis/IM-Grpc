@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"sync"
 
 	"github.com/IM_System/apps/user/api/internal/config"
 	"github.com/IM_System/apps/user/api/internal/handler"
@@ -13,11 +14,14 @@ import (
 	"github.com/IM_System/pkg/configserver"
 	"github.com/IM_System/pkg/resultx"
 
+	"github.com/zeromicro/go-zero/core/proc"
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
 var configFile = flag.String("f", "etc/dev/user.yaml", "the config file")
+
+var wg sync.WaitGroup
 
 func main() {
 	flag.Parse()
@@ -32,11 +36,34 @@ func main() {
 		Configs:        "user-api.yaml",
 		ConfigFilePath: "./etc/conf",
 		LogLevel:       "DEBUG",
-	})).MustLoad(&c)
+	})).MustLoad(&c, func(bytes []byte) error {
+		var c config.Config
+		configserver.LoadFromJsonBytes(bytes, &c)
+
+		proc.WrapUp() // 结束服务
+
+		fmt.Println("更新后的配置", c)
+		wg.Add(1)
+		go func(c config.Config) {
+			defer wg.Done()
+			Run(c)
+		}(c)
+		return nil
+	})
 	if err != nil {
 		panic(err)
 	}
 
+	wg.Add(1)
+	go func(c config.Config) {
+		defer wg.Done()
+		Run(c)
+	}(c)
+	wg.Wait()
+
+}
+
+func Run(c config.Config) {
 	server := rest.MustNewServer(c.RestConf)
 	defer server.Stop()
 

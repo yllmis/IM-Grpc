@@ -3,14 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
+	"sync"
 
 	"github.com/IM_System/apps/user/rpc/internal/config"
 	"github.com/IM_System/apps/user/rpc/internal/server"
 	"github.com/IM_System/apps/user/rpc/internal/svc"
 	"github.com/IM_System/apps/user/rpc/user"
+	"github.com/IM_System/pkg/configserver"
 	"github.com/IM_System/pkg/interceptor/rpcserver"
 
-	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
@@ -19,11 +20,52 @@ import (
 
 var configFile = flag.String("f", "etc/dev/user.yaml", "the config file")
 
+var wg sync.WaitGroup
+
+var grpcSvr *grpc.Server
+
 func main() {
 	flag.Parse()
 
 	var c config.Config
-	conf.MustLoad(*configFile, &c)
+
+	err := configserver.NewConfigServer(*configFile, configserver.NewSail(&configserver.Config{
+		ETCDEndpoints:  "etcd:2379",
+		ProjectKey:     "98c6f2c2287f4c73cea3d40ae7ec3ff2",
+		Namespace:      "user",
+		Configs:        "user-rpc.yaml",
+		ConfigFilePath: "./etc/conf",
+		LogLevel:       "DEBUG",
+	})).MustLoad(&c, func(bytes []byte) error {
+		var c config.Config
+		configserver.LoadFromJsonBytes(bytes, &c)
+
+		grpcSvr.GracefulStop() // 结束服务
+
+		fmt.Println("更新后的配置", c)
+		wg.Add(1)
+		go func(c config.Config) {
+			defer wg.Done()
+			Run(c)
+		}(c)
+
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	wg.Add(1)
+	go func(c config.Config) {
+		defer wg.Done()
+		Run(c)
+	}(c)
+
+	wg.Wait()
+
+}
+
+func Run(c config.Config) {
 	ctx := svc.NewServiceContext(c)
 
 	if err := ctx.SetRootToken(); err != nil {

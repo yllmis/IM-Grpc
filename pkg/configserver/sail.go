@@ -2,6 +2,7 @@ package configserver
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/HYY-yu/sail-client"
 )
@@ -17,19 +18,40 @@ type Config struct {
 
 type Sail struct {
 	*sail.Sail
+	sail.OnConfigChange
+	c *Config
 }
 
 func NewSail(cfg *Config) *Sail {
-	s := sail.New(&sail.MetaConfig{
-		ETCDEndpoints:  cfg.ETCDEndpoints,
-		ProjectKey:     cfg.ProjectKey,
-		Namespace:      cfg.Namespace,
-		Configs:        cfg.Configs,
-		ConfigFilePath: cfg.ConfigFilePath,
-		LogLevel:       cfg.LogLevel,
-	})
-	return &Sail{Sail: s}
+	// s := sail.New(&sail.MetaConfig{
+	// 	ETCDEndpoints:  cfg.ETCDEndpoints,
+	// 	ProjectKey:     cfg.ProjectKey,
+	// 	Namespace:      cfg.Namespace,
+	// 	Configs:        cfg.Configs,
+	// 	ConfigFilePath: cfg.ConfigFilePath,
+	// 	LogLevel:       cfg.LogLevel,
+	// })
+	return &Sail{c: cfg}
 
+}
+
+func (s *Sail) Build() error {
+	var opts []sail.Option
+
+	if s.OnConfigChange != nil {
+		opts = append(opts, sail.WithOnConfigChange(s.OnConfigChange))
+	}
+
+	s.Sail = sail.New(&sail.MetaConfig{
+		ETCDEndpoints:  s.c.ETCDEndpoints,
+		ProjectKey:     s.c.ProjectKey,
+		Namespace:      s.c.Namespace,
+		Configs:        s.c.Configs,
+		ConfigFilePath: s.c.ConfigFilePath,
+		LogLevel:       s.c.LogLevel,
+	}, opts...)
+
+	return s.Sail.Err()
 }
 
 func (s *Sail) FormJsonBytes() ([]byte, error) {
@@ -37,7 +59,12 @@ func (s *Sail) FormJsonBytes() ([]byte, error) {
 		return nil, err
 	}
 
-	v, err := s.MergeVipers() // 将多个配置文件合并成一个viper实例
+	return s.fromJsonBytes(s.Sail)
+
+}
+
+func (s *Sail) fromJsonBytes(sail *sail.Sail) ([]byte, error) {
+	v, err := sail.MergeVipers() // 将多个配置文件合并成一个viper实例
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +73,16 @@ func (s *Sail) FormJsonBytes() ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (s *Sail) Error() error {
-	return s.Err()
+func (s *Sail) SetOnChange(f OnChange) {
+	s.OnConfigChange = func(configFileKey string, sail *sail.Sail) {
+		data, err := s.fromJsonBytes(sail)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		if err := f(data); err != nil {
+			fmt.Println("Onchanger error ", err)
+		}
+	}
 }

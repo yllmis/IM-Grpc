@@ -8,9 +8,14 @@ import (
 
 var ErrNotSetConfig = errors.New("未设置配置信息")
 
+type OnChange func([]byte) error
+
 type ConfigServer interface {
+	Build() error
+	SetOnChange(OnChange)
+
 	FormJsonBytes() ([]byte, error)
-	Error() error
+	// Error() error
 }
 
 type configServer struct {
@@ -25,10 +30,7 @@ func NewConfigServer(configFile string, s ConfigServer) *configServer {
 	}
 }
 
-func (c *configServer) MustLoad(v any) error {
-	if c.ConfigServer.Error() != nil {
-		return c.ConfigServer.Error()
-	}
+func (c *configServer) MustLoad(v any, onChange OnChange) error {
 
 	if c.configFile == "" && c.ConfigServer == nil {
 		return ErrNotSetConfig
@@ -40,14 +42,22 @@ func (c *configServer) MustLoad(v any) error {
 		return nil
 	}
 
+	if onChange != nil {
+		c.SetOnChange(onChange)
+	}
+
+	if err := c.ConfigServer.Build(); err != nil {
+		return err
+	}
+
 	data, err := c.ConfigServer.FormJsonBytes()
 	if err != nil {
 		return err
 	}
 
-	return conf.LoadFromJsonBytes(data, v)
+	return LoadFromJsonBytes(data, v)
 }
 
-func (c *configServer) Error() error {
-	return c.ConfigServer.Error()
+func LoadFromJsonBytes(data []byte, v any) error {
+	return conf.LoadFromJsonBytes(data, nil)
 }
