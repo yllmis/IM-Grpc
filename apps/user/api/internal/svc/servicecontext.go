@@ -8,7 +8,21 @@ import (
 	"github.com/IM_System/apps/user/rpc/userclient"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/zrpc"
+	"google.golang.org/grpc"
 )
+
+var retryPolicy = `{
+  "methodConfig": [{
+	"name": [{"service": "user.User"}],
+	"waitForReady": true,
+	"retryPolicy": {
+	  "MaxAttempts": 5,
+	  "InitialBackoff": "0.001s",
+	  "MaxBackoff": "0.002s",
+	  "BackoffMultiplier": 1.0,
+	  "RetryableStatusCodes": ["UNKNOWN"]
+  }]
+}`
 
 type ServiceContext struct {
 	Config config.Config
@@ -24,6 +38,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 		Redis: redis.MustNewRedis(c.Redisx),
 
-		User: userclient.NewUser(zrpc.MustNewClient(c.UserRpc)),
+		User: userclient.NewUser(zrpc.MustNewClient(c.UserRpc, zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
 	}
 }
