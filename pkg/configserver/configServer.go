@@ -59,5 +59,5 @@ func (c *configServer) MustLoad(v any, onChange OnChange) error {
 }
 
 func LoadFromJsonBytes(data []byte, v any) error {
-	return conf.LoadFromJsonBytes(data, nil)
+	return conf.LoadFromJsonBytes(data, v)
 }
