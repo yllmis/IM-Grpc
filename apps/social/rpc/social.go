@@ -8,6 +8,7 @@ import (
 	"github.com/IM_System/apps/social/rpc/internal/server"
 	"github.com/IM_System/apps/social/rpc/internal/svc"
 	"github.com/IM_System/apps/social/rpc/social"
+	"github.com/IM_System/pkg/interceptor"
 	"github.com/IM_System/pkg/interceptor/rpcserver"
 
 	"github.com/zeromicro/go-zero/core/conf"
@@ -35,6 +36,7 @@ func main() {
 	})
 
 	s.AddUnaryInterceptors(rpcserver.LoginInterceptorfunc)
+	s.AddUnaryInterceptors(interceptor.NewIdempotentServer(interceptor.NewDefaultIdempotent(c.Cache[0].RedisConf)))
 	defer s.Stop()
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
