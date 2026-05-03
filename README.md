@@ -41,6 +41,85 @@ IM-Grpc/
   bin/                   # 预编译二进制文件
 ```
 
+### 整体架构图分析
+```mermaid
+graph TB
+    Client["客户端 (Browser / App)"]
+
+    subgraph APISIX["APISIX 网关 :9080"]
+        direction TB
+        GW["路由转发 / 负载均衡"]
+    end
+
+    subgraph APILayer["API 层 (HTTP REST)"]
+        direction TB
+        UserAPI["user-api :8888<br/>─────────────────<br/>中间件: JWT<br/>路由:<br/> POST /v1/user/register<br/> POST /v1/user/login<br/> GET /v1/user/getUserInfo<br/>─────────────────<br/>配置热更新: Sail+etcd"]
+        SocialAPI["social-api :8881<br/>─────────────────<br/>中间件: JWT / 令牌桶限流<br/>(rate=1, burst=100) / 幂等<br/>路由:<br/> POST/PUT/GET /v1/social/friend/*<br/> POST/PUT/GET /v1/social/group/*<br/>─────────────────<br/>配置热更新: Sail+etcd"]
+        ImAPI["im-api :8882<br/>─────────────────<br/>中间件: JWT<br/>路由:<br/> GET /v1/im/chatlog<br/> GET /v1/im/conversation<br/> POST /v1/im/setup/conversation<br/> PUT /v1/im/conversation"]
+    end
+
+    subgraph WSLayer["WebSocket 层"]
+        ImWS["im-ws :10090<br/>─────────────────<br/>认证: JWT (HTTP升级时解析)<br/>ACK: NoAck / OnlyAck / RigorAck<br/>连接管理: userToConn↔connToUser<br/>─────────────────<br/>WS路由:<br/> user.online<br/> conversation.chat<br/> conversation.markRead<br/> push"]
+    end
+
+    subgraph RPCLayer["RPC 层 (gRPC)"]
+        UserRPC["user-rpc :10000<br/>─────────────────<br/>拦截器: LoginInterceptor<br/>─────────────────<br/>Proto User:<br/> Ping / Login / Register<br/> GetUserInfo / FindUser"]
+        SocialRPC["social-rpc :10001<br/>─────────────────<br/>拦截器:<br/> LoginInterceptor<br/> SyncxLimit(200并发)<br/> IdempotentServer(GroupCreate)<br/>─────────────────<br/>Proto social:<br/> FriendPutIn/Handle/List<br/> FriendList / GroupCreate<br/> GroupPutin/Handle/List<br/> Groupusers"]
+        ImRPC["im-rpc :10002<br/>─────────────────<br/>拦截器: LoginInterceptor<br/>─────────────────<br/>Proto Im:<br/> GetChatLog<br/> SetUpUserConversation<br/> GetConversations<br/> PutConversations<br/> CreateGroupConversation"]
+    end
+
+    subgraph MQ["消息队列"]
+        Kafka["Kafka :9092<br/>─────────────────<br/>Topics:<br/> msgChatTransfer<br/> msgReadTransfer"]
+    end
+
+    subgraph TaskLayer["后台任务"]
+        TaskMQ["task-mq<br/>─────────────────<br/>Kafka消费者<br/>─────────────────<br/>MsgChatTransfer:<br/> 持久化聊天记录<br/> 更新会话<br/> 推送消息(单聊/群聊)<br/>─────────────────<br/>MsgReadTransfer:<br/> 更新bitmap已读<br/> 合并群已读(60s/2条)<br/> 推送已读回执"]
+    end
+
+    subgraph Storage["存储层"]
+        MySQL["MySQL :3306<br/>yllmis-im<br/>─────────────────<br/>users<br/>friends / friend_requests<br/>groups / group_members<br/>group_requests"]
+        MongoDB["MongoDB :27017<br/>yllmis-im<br/>─────────────────<br/>chat_log<br/>(conversationId, sender,<br/> receiver, content,<br/> readRecords bitmap)<br/>─────────────────<br/>conversation<br/>(userId, lastMsg,<br/> unreadCount, sequence)"]
+        Redis["Redis :6379<br/>─────────────────<br/>JWT token管理<br/>数据缓存<br/>令牌桶限流状态<br/>幂等性key<br/>系统root token"]
+    end
+
+    etcd["etcd :2379<br/>─────────────────<br/>服务发现<br/>配置中心(Sail)"]
+
+    Client <-->|"HTTP / HTTPS"| APISIX
+    APISIX <-->|"HTTP :8888"| UserAPI
+    APISIX <-->|"HTTP :8881"| SocialAPI
+    APISIX <-->|"HTTP :8882"| ImAPI
+    Client <-->|"WebSocket :10090"| ImWS
+
+    UserAPI -->|"gRPC (etcd: user.rpc)<br/>重试:5次"| UserRPC
+    SocialAPI -->|"gRPC (etcd: social.rpc)<br/>重试:5次+幂等客户端"| SocialRPC
+    SocialAPI -->|"gRPC (etcd: user.rpc)"| UserRPC
+    ImAPI -->|"gRPC (etcd: im.rpc)"| ImRPC
+    ImAPI -->|"gRPC (etcd: user.rpc)"| UserRPC
+    ImAPI -->|"gRPC (etcd: social.rpc)"| SocialRPC
+
+    ImWS -->|"Kafka produce"| Kafka
+    Kafka -->|"Kafka consume"| TaskMQ
+    TaskMQ -->|"gRPC (etcd: social.rpc)<br/>获取群成员"| SocialRPC
+    TaskMQ -->|"WS客户端<br/>认证:system:root:token<br/>方法:push"| ImWS
+
+    UserRPC --> MySQL
+    UserRPC --> Redis
+    SocialRPC --> MySQL
+    SocialRPC --> Redis
+    ImRPC --> MongoDB
+    ImWS --> MongoDB
+    TaskMQ --> MongoDB
+    TaskMQ --> Redis
+
+    UserAPI <-.->|"注册/配置"| etcd
+    SocialAPI <-.->|"注册/配置"| etcd
+    ImAPI <-.->|"注册/配置"| etcd
+    UserRPC <-.->|"注册/配置"| etcd
+    SocialRPC <-.->|"注册/配置"| etcd
+    ImRPC <-.->|"注册/配置"| etcd
+
+```
+
 ## 核心消息流程
 
 ### 单聊/群聊消息流

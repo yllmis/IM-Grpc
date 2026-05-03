@@ -45,17 +45,16 @@ func (l *GroupUserListLogic) GroupUserList(req *types.GroupUserListReq) (resp *t
 		uids = append(uids, v.UserId)
 	}
 
-	userList, err := l.svcCtx.UserRpc.FindUser(l.ctx, &userclient.FindUserReq{
-		Ids: uids,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	// 防止查出来张冠李戴的情况，mysql中in查询的结果是无序的，所以我们需要把查出来的用户信息进行一个记录，记录成一个map
-	userRecords := make(map[string]*userclient.UserEntity, len(userList.Users))
-	for i, _ := range userList.Users {
-		userRecords[userList.Users[i].Id] = userList.Users[i]
+	// 获取用户信息（降级：查询失败时只返回基础成员信息，不带昵称头像）
+	userRecords := make(map[string]*userclient.UserEntity)
+	userList, err := l.svcCtx.UserRpc.FindUser(l.ctx, &userclient.FindUserReq{Ids: uids})
+	if err != nil {
+		logx.Errorf("userRpc.FindUser failed: %v", err)
+	} else {
+		for i := range userList.Users {
+			userRecords[userList.Users[i].Id] = userList.Users[i]
+		}
 	}
 
 	respList := make([]*types.GroupMembers, 0, len(groupUsers.List))
