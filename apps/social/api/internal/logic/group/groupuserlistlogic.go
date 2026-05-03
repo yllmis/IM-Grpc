@@ -35,6 +35,9 @@ func (l *GroupUserListLogic) GroupUserList(req *types.GroupUserListReq) (resp *t
 	groupUsers, err := l.svcCtx.SocialRpc.Groupusers(l.ctx, &social.GroupusersReq{
 		GroupId: req.GroupId,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	// 获取用户信息
 	uids := make([]string, 0, len(groupUsers.List))
@@ -45,6 +48,9 @@ func (l *GroupUserListLogic) GroupUserList(req *types.GroupUserListReq) (resp *t
 	userList, err := l.svcCtx.UserRpc.FindUser(l.ctx, &userclient.FindUserReq{
 		Ids: uids,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	// 防止查出来张冠李戴的情况，mysql中in查询的结果是无序的，所以我们需要把查出来的用户信息进行一个记录，记录成一个map
 	userRecords := make(map[string]*userclient.UserEntity, len(userList.Users))

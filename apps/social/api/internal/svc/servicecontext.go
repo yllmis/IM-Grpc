@@ -25,6 +25,7 @@ var retryPolicy = `{
 	  "MaxBackoff": "0.002s",
 	  "BackoffMultiplier": 1.0,
 	  "RetryableStatusCodes": ["UNKNOWN","DEADLINE_EXCEEDED"]
+	}
   }]
 }`
 
@@ -32,6 +33,7 @@ type ServiceContext struct {
 	Config config.Config
 
 	IdempotenceMiddleware rest.Middleware
+	LimitMiddleware       rest.Middleware
 	*redis.Redis
 
 	UserRpc   userclient.User
@@ -43,6 +45,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config: c,
 
 		IdempotenceMiddleware: middleware.NewIdempotenceMiddleware().Handler,
+		LimitMiddleware:       middleware.NewLimitMiddleware(c.Redisx).TokenLimitHandler(1, 100),
 		Redis:                 redis.MustNewRedis(c.Redisx),
 
 		UserRpc: userclient.NewUser(zrpc.MustNewClient(c.UserRpc)),

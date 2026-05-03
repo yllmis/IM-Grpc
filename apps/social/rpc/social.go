@@ -35,7 +35,7 @@ func main() {
 		}
 	})
 
-	s.AddUnaryInterceptors(rpcserver.LoginInterceptorfunc)
+	s.AddUnaryInterceptors(rpcserver.LoginInterceptorfunc, rpcserver.SyncxLimitInterceptor(200))
 	s.AddUnaryInterceptors(interceptor.NewIdempotentServer(interceptor.NewDefaultIdempotent(c.Cache[0].RedisConf)))
 	defer s.Stop()
 
