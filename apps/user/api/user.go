@@ -34,13 +34,13 @@ func main() {
 		ProjectKey:     "98c6f2c2287f4c73cea3d40ae7ec3ff2",
 		Namespace:      "user",
 		Configs:        "user-api.yaml",
-		ConfigFilePath: "./etc/conf",
+		ConfigFilePath: "./conf",
 		LogLevel:       "DEBUG",
 	})).MustLoad(&c, func(bytes []byte) error {
 		var c config.Config
 		configserver.LoadFromJsonBytes(bytes, &c)
 
-		proc.WrapUp() // 结束服务
+		proc.Shutdown() // 结束旧服务并释放监听端口
 
 		fmt.Println("更新后的配置", c)
 		wg.Add(1)

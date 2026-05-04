@@ -23,6 +23,7 @@ var configFile = flag.String("f", "etc/dev/user.yaml", "the config file")
 var wg sync.WaitGroup
 
 var grpcSvr *grpc.Server
+var grpcSvrMu sync.Mutex
 
 func main() {
 	flag.Parse()
@@ -34,13 +35,20 @@ func main() {
 		ProjectKey:     "98c6f2c2287f4c73cea3d40ae7ec3ff2",
 		Namespace:      "user",
 		Configs:        "user-rpc.yaml",
-		ConfigFilePath: "./etc/conf",
+		ConfigFilePath: "./conf",
 		LogLevel:       "DEBUG",
 	})).MustLoad(&c, func(bytes []byte) error {
 		var c config.Config
-		configserver.LoadFromJsonBytes(bytes, &c)
+		if err := configserver.LoadFromJsonBytes(bytes, &c); err != nil {
+			return err
+		}
 
-		grpcSvr.GracefulStop() // 结束服务
+		grpcSvrMu.Lock()
+		current := grpcSvr
+		grpcSvrMu.Unlock()
+		if current != nil {
+			current.GracefulStop() // 结束旧服务，释放监听端口
+		}
 
 		fmt.Println("更新后的配置", c)
 		wg.Add(1)
@@ -73,6 +81,10 @@ func Run(c config.Config) {
 	}
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
+		grpcSvrMu.Lock()
+		grpcSvr = grpcServer
+		grpcSvrMu.Unlock()
+
 		user.RegisterUserServer(grpcServer, server.NewUserServer(ctx))
 
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
