@@ -21,6 +21,7 @@ var retryPolicy = `{
 	  "MaxBackoff": "0.002s",
 	  "BackoffMultiplier": 1.0,
 	  "RetryableStatusCodes": ["UNKNOWN"]
+  }
   }]
 }`
 
