@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.1
-// source: apps/social/rpc/social.proto
+// source: social.proto
 
 package social
 
@@ -36,7 +36,7 @@ type Friends struct {
 
 func (x *Friends) Reset() {
 	*x = Friends{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[0]
+	mi := &file_social_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +48,7 @@ func (x *Friends) String() string {
 func (*Friends) ProtoMessage() {}
 
 func (x *Friends) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[0]
+	mi := &file_social_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +61,7 @@ func (x *Friends) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Friends.ProtoReflect.Descriptor instead.
 func (*Friends) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{0}
+	return file_social_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Friends) GetId() int32 {
@@ -113,7 +113,7 @@ type FriendRequests struct {
 
 func (x *FriendRequests) Reset() {
 	*x = FriendRequests{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[1]
+	mi := &file_social_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -125,7 +125,7 @@ func (x *FriendRequests) String() string {
 func (*FriendRequests) ProtoMessage() {}
 
 func (x *FriendRequests) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[1]
+	mi := &file_social_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -138,7 +138,7 @@ func (x *FriendRequests) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FriendRequests.ProtoReflect.Descriptor instead.
 func (*FriendRequests) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{1}
+	return file_social_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *FriendRequests) GetId() int32 {
@@ -200,7 +200,7 @@ type Group struct {
 
 func (x *Group) Reset() {
 	*x = Group{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[2]
+	mi := &file_social_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -212,7 +212,7 @@ func (x *Group) String() string {
 func (*Group) ProtoMessage() {}
 
 func (x *Group) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[2]
+	mi := &file_social_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -225,7 +225,7 @@ func (x *Group) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Group.ProtoReflect.Descriptor instead.
 func (*Group) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{2}
+	return file_social_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Group) GetId() string {
@@ -307,7 +307,7 @@ type GroupMembers struct {
 
 func (x *GroupMembers) Reset() {
 	*x = GroupMembers{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[3]
+	mi := &file_social_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -319,7 +319,7 @@ func (x *GroupMembers) String() string {
 func (*GroupMembers) ProtoMessage() {}
 
 func (x *GroupMembers) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[3]
+	mi := &file_social_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -332,7 +332,7 @@ func (x *GroupMembers) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupMembers.ProtoReflect.Descriptor instead.
 func (*GroupMembers) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{3}
+	return file_social_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GroupMembers) GetId() int32 {
@@ -408,7 +408,7 @@ type GroupRequests struct {
 
 func (x *GroupRequests) Reset() {
 	*x = GroupRequests{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[4]
+	mi := &file_social_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -420,7 +420,7 @@ func (x *GroupRequests) String() string {
 func (*GroupRequests) ProtoMessage() {}
 
 func (x *GroupRequests) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[4]
+	mi := &file_social_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -433,7 +433,7 @@ func (x *GroupRequests) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupRequests.ProtoReflect.Descriptor instead.
 func (*GroupRequests) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{4}
+	return file_social_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GroupRequests) GetId() int32 {
@@ -511,7 +511,7 @@ type FriendPutInReq struct {
 
 func (x *FriendPutInReq) Reset() {
 	*x = FriendPutInReq{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[5]
+	mi := &file_social_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -523,7 +523,7 @@ func (x *FriendPutInReq) String() string {
 func (*FriendPutInReq) ProtoMessage() {}
 
 func (x *FriendPutInReq) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[5]
+	mi := &file_social_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -536,7 +536,7 @@ func (x *FriendPutInReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FriendPutInReq.ProtoReflect.Descriptor instead.
 func (*FriendPutInReq) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{5}
+	return file_social_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *FriendPutInReq) GetUserId() string {
@@ -575,7 +575,7 @@ type FriendPutInResp struct {
 
 func (x *FriendPutInResp) Reset() {
 	*x = FriendPutInResp{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[6]
+	mi := &file_social_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -587,7 +587,7 @@ func (x *FriendPutInResp) String() string {
 func (*FriendPutInResp) ProtoMessage() {}
 
 func (x *FriendPutInResp) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[6]
+	mi := &file_social_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -600,7 +600,7 @@ func (x *FriendPutInResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FriendPutInResp.ProtoReflect.Descriptor instead.
 func (*FriendPutInResp) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{6}
+	return file_social_proto_rawDescGZIP(), []int{6}
 }
 
 type FriendPutInHandleReq struct {
@@ -614,7 +614,7 @@ type FriendPutInHandleReq struct {
 
 func (x *FriendPutInHandleReq) Reset() {
 	*x = FriendPutInHandleReq{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[7]
+	mi := &file_social_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -626,7 +626,7 @@ func (x *FriendPutInHandleReq) String() string {
 func (*FriendPutInHandleReq) ProtoMessage() {}
 
 func (x *FriendPutInHandleReq) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[7]
+	mi := &file_social_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -639,7 +639,7 @@ func (x *FriendPutInHandleReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FriendPutInHandleReq.ProtoReflect.Descriptor instead.
 func (*FriendPutInHandleReq) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{7}
+	return file_social_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *FriendPutInHandleReq) GetFriendReqId() int32 {
@@ -671,7 +671,7 @@ type FriendPutInHandleResp struct {
 
 func (x *FriendPutInHandleResp) Reset() {
 	*x = FriendPutInHandleResp{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[8]
+	mi := &file_social_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -683,7 +683,7 @@ func (x *FriendPutInHandleResp) String() string {
 func (*FriendPutInHandleResp) ProtoMessage() {}
 
 func (x *FriendPutInHandleResp) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[8]
+	mi := &file_social_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -696,7 +696,7 @@ func (x *FriendPutInHandleResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FriendPutInHandleResp.ProtoReflect.Descriptor instead.
 func (*FriendPutInHandleResp) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{8}
+	return file_social_proto_rawDescGZIP(), []int{8}
 }
 
 type FriendPutInListReq struct {
@@ -708,7 +708,7 @@ type FriendPutInListReq struct {
 
 func (x *FriendPutInListReq) Reset() {
 	*x = FriendPutInListReq{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[9]
+	mi := &file_social_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -720,7 +720,7 @@ func (x *FriendPutInListReq) String() string {
 func (*FriendPutInListReq) ProtoMessage() {}
 
 func (x *FriendPutInListReq) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[9]
+	mi := &file_social_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -733,7 +733,7 @@ func (x *FriendPutInListReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FriendPutInListReq.ProtoReflect.Descriptor instead.
 func (*FriendPutInListReq) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{9}
+	return file_social_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *FriendPutInListReq) GetUserId() string {
@@ -752,7 +752,7 @@ type FriendPutInListResp struct {
 
 func (x *FriendPutInListResp) Reset() {
 	*x = FriendPutInListResp{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[10]
+	mi := &file_social_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -764,7 +764,7 @@ func (x *FriendPutInListResp) String() string {
 func (*FriendPutInListResp) ProtoMessage() {}
 
 func (x *FriendPutInListResp) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[10]
+	mi := &file_social_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -777,7 +777,7 @@ func (x *FriendPutInListResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FriendPutInListResp.ProtoReflect.Descriptor instead.
 func (*FriendPutInListResp) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{10}
+	return file_social_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *FriendPutInListResp) GetFriendReqs() []*FriendRequests {
@@ -796,7 +796,7 @@ type FriendListReq struct {
 
 func (x *FriendListReq) Reset() {
 	*x = FriendListReq{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[11]
+	mi := &file_social_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -808,7 +808,7 @@ func (x *FriendListReq) String() string {
 func (*FriendListReq) ProtoMessage() {}
 
 func (x *FriendListReq) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[11]
+	mi := &file_social_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -821,7 +821,7 @@ func (x *FriendListReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FriendListReq.ProtoReflect.Descriptor instead.
 func (*FriendListReq) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{11}
+	return file_social_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *FriendListReq) GetUserId() string {
@@ -840,7 +840,7 @@ type FriendListResp struct {
 
 func (x *FriendListResp) Reset() {
 	*x = FriendListResp{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[12]
+	mi := &file_social_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -852,7 +852,7 @@ func (x *FriendListResp) String() string {
 func (*FriendListResp) ProtoMessage() {}
 
 func (x *FriendListResp) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[12]
+	mi := &file_social_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -865,7 +865,7 @@ func (x *FriendListResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FriendListResp.ProtoReflect.Descriptor instead.
 func (*FriendListResp) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{12}
+	return file_social_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *FriendListResp) GetFriends() []*Friends {
@@ -888,7 +888,7 @@ type GroupCreateReq struct {
 
 func (x *GroupCreateReq) Reset() {
 	*x = GroupCreateReq{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[13]
+	mi := &file_social_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -900,7 +900,7 @@ func (x *GroupCreateReq) String() string {
 func (*GroupCreateReq) ProtoMessage() {}
 
 func (x *GroupCreateReq) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[13]
+	mi := &file_social_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -913,7 +913,7 @@ func (x *GroupCreateReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupCreateReq.ProtoReflect.Descriptor instead.
 func (*GroupCreateReq) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{13}
+	return file_social_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GroupCreateReq) GetName() string {
@@ -953,7 +953,7 @@ type GroupCreateResp struct {
 
 func (x *GroupCreateResp) Reset() {
 	*x = GroupCreateResp{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[14]
+	mi := &file_social_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -965,7 +965,7 @@ func (x *GroupCreateResp) String() string {
 func (*GroupCreateResp) ProtoMessage() {}
 
 func (x *GroupCreateResp) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[14]
+	mi := &file_social_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -978,7 +978,7 @@ func (x *GroupCreateResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupCreateResp.ProtoReflect.Descriptor instead.
 func (*GroupCreateResp) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{14}
+	return file_social_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GroupCreateResp) GetId() string {
@@ -1002,7 +1002,7 @@ type GroupPutinReq struct {
 
 func (x *GroupPutinReq) Reset() {
 	*x = GroupPutinReq{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[15]
+	mi := &file_social_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1014,7 +1014,7 @@ func (x *GroupPutinReq) String() string {
 func (*GroupPutinReq) ProtoMessage() {}
 
 func (x *GroupPutinReq) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[15]
+	mi := &file_social_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1027,7 +1027,7 @@ func (x *GroupPutinReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupPutinReq.ProtoReflect.Descriptor instead.
 func (*GroupPutinReq) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{15}
+	return file_social_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GroupPutinReq) GetGroupId() string {
@@ -1081,7 +1081,7 @@ type GroupPutinResp struct {
 
 func (x *GroupPutinResp) Reset() {
 	*x = GroupPutinResp{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[16]
+	mi := &file_social_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1093,7 +1093,7 @@ func (x *GroupPutinResp) String() string {
 func (*GroupPutinResp) ProtoMessage() {}
 
 func (x *GroupPutinResp) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[16]
+	mi := &file_social_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1106,7 +1106,7 @@ func (x *GroupPutinResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupPutinResp.ProtoReflect.Descriptor instead.
 func (*GroupPutinResp) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{16}
+	return file_social_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GroupPutinResp) GetGroupId() string {
@@ -1125,7 +1125,7 @@ type GroupPutinListReq struct {
 
 func (x *GroupPutinListReq) Reset() {
 	*x = GroupPutinListReq{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[17]
+	mi := &file_social_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1137,7 +1137,7 @@ func (x *GroupPutinListReq) String() string {
 func (*GroupPutinListReq) ProtoMessage() {}
 
 func (x *GroupPutinListReq) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[17]
+	mi := &file_social_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1150,7 +1150,7 @@ func (x *GroupPutinListReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupPutinListReq.ProtoReflect.Descriptor instead.
 func (*GroupPutinListReq) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{17}
+	return file_social_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GroupPutinListReq) GetGroupId() string {
@@ -1169,7 +1169,7 @@ type GroupPutinListResp struct {
 
 func (x *GroupPutinListResp) Reset() {
 	*x = GroupPutinListResp{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[18]
+	mi := &file_social_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1181,7 +1181,7 @@ func (x *GroupPutinListResp) String() string {
 func (*GroupPutinListResp) ProtoMessage() {}
 
 func (x *GroupPutinListResp) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[18]
+	mi := &file_social_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1194,7 +1194,7 @@ func (x *GroupPutinListResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupPutinListResp.ProtoReflect.Descriptor instead.
 func (*GroupPutinListResp) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{18}
+	return file_social_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GroupPutinListResp) GetGroupReqs() []*GroupRequests {
@@ -1218,7 +1218,7 @@ type GroupPutInHandleReq struct {
 
 func (x *GroupPutInHandleReq) Reset() {
 	*x = GroupPutInHandleReq{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[19]
+	mi := &file_social_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1230,7 +1230,7 @@ func (x *GroupPutInHandleReq) String() string {
 func (*GroupPutInHandleReq) ProtoMessage() {}
 
 func (x *GroupPutInHandleReq) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[19]
+	mi := &file_social_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1243,7 +1243,7 @@ func (x *GroupPutInHandleReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupPutInHandleReq.ProtoReflect.Descriptor instead.
 func (*GroupPutInHandleReq) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{19}
+	return file_social_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GroupPutInHandleReq) GetGroupReqId() int32 {
@@ -1291,13 +1291,14 @@ func (x *GroupPutInHandleReq) GetUserAvatarUrl() string {
 type GroupPutInHandleResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GroupId       string                 `protobuf:"bytes,1,opt,name=groupId,proto3" json:"groupId,omitempty"`
+	ReqId         string                 `protobuf:"bytes,2,opt,name=reqId,proto3" json:"reqId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GroupPutInHandleResp) Reset() {
 	*x = GroupPutInHandleResp{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[20]
+	mi := &file_social_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1309,7 +1310,7 @@ func (x *GroupPutInHandleResp) String() string {
 func (*GroupPutInHandleResp) ProtoMessage() {}
 
 func (x *GroupPutInHandleResp) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[20]
+	mi := &file_social_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1322,12 +1323,19 @@ func (x *GroupPutInHandleResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupPutInHandleResp.ProtoReflect.Descriptor instead.
 func (*GroupPutInHandleResp) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{20}
+	return file_social_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GroupPutInHandleResp) GetGroupId() string {
 	if x != nil {
 		return x.GroupId
+	}
+	return ""
+}
+
+func (x *GroupPutInHandleResp) GetReqId() string {
+	if x != nil {
+		return x.ReqId
 	}
 	return ""
 }
@@ -1341,7 +1349,7 @@ type GroupListReq struct {
 
 func (x *GroupListReq) Reset() {
 	*x = GroupListReq{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[21]
+	mi := &file_social_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1353,7 +1361,7 @@ func (x *GroupListReq) String() string {
 func (*GroupListReq) ProtoMessage() {}
 
 func (x *GroupListReq) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[21]
+	mi := &file_social_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1366,7 +1374,7 @@ func (x *GroupListReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupListReq.ProtoReflect.Descriptor instead.
 func (*GroupListReq) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{21}
+	return file_social_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GroupListReq) GetUserId() string {
@@ -1385,7 +1393,7 @@ type GroupListResp struct {
 
 func (x *GroupListResp) Reset() {
 	*x = GroupListResp{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[22]
+	mi := &file_social_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1397,7 +1405,7 @@ func (x *GroupListResp) String() string {
 func (*GroupListResp) ProtoMessage() {}
 
 func (x *GroupListResp) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[22]
+	mi := &file_social_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1410,7 +1418,7 @@ func (x *GroupListResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupListResp.ProtoReflect.Descriptor instead.
 func (*GroupListResp) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{22}
+	return file_social_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GroupListResp) GetGroups() []*Group {
@@ -1429,7 +1437,7 @@ type GroupusersReq struct {
 
 func (x *GroupusersReq) Reset() {
 	*x = GroupusersReq{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[23]
+	mi := &file_social_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1441,7 +1449,7 @@ func (x *GroupusersReq) String() string {
 func (*GroupusersReq) ProtoMessage() {}
 
 func (x *GroupusersReq) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[23]
+	mi := &file_social_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1454,7 +1462,7 @@ func (x *GroupusersReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupusersReq.ProtoReflect.Descriptor instead.
 func (*GroupusersReq) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{23}
+	return file_social_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *GroupusersReq) GetGroupId() string {
@@ -1473,7 +1481,7 @@ type GroupusersResp struct {
 
 func (x *GroupusersResp) Reset() {
 	*x = GroupusersResp{}
-	mi := &file_apps_social_rpc_social_proto_msgTypes[24]
+	mi := &file_social_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1485,7 +1493,7 @@ func (x *GroupusersResp) String() string {
 func (*GroupusersResp) ProtoMessage() {}
 
 func (x *GroupusersResp) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_social_rpc_social_proto_msgTypes[24]
+	mi := &file_social_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1498,7 +1506,7 @@ func (x *GroupusersResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupusersResp.ProtoReflect.Descriptor instead.
 func (*GroupusersResp) Descriptor() ([]byte, []int) {
-	return file_apps_social_rpc_social_proto_rawDescGZIP(), []int{24}
+	return file_social_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GroupusersResp) GetList() []*GroupMembers {
@@ -1508,11 +1516,11 @@ func (x *GroupusersResp) GetList() []*GroupMembers {
 	return nil
 }
 
-var File_apps_social_rpc_social_proto protoreflect.FileDescriptor
+var File_social_proto protoreflect.FileDescriptor
 
-const file_apps_social_rpc_social_proto_rawDesc = "" +
+const file_social_proto_rawDesc = "" +
 	"\n" +
-	"\x1capps/social/rpc/social.proto\x12\x06social\"\x85\x01\n" +
+	"\fsocial.proto\x12\x06social\"\x85\x01\n" +
 	"\aFriends\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x16\n" +
 	"\x06userId\x18\x02 \x01(\tR\x06userId\x12\x16\n" +
@@ -1619,9 +1627,10 @@ const file_apps_social_rpc_social_proto_rawDesc = "" +
 	"\thandleUid\x18\x03 \x01(\tR\thandleUid\x12\"\n" +
 	"\fhandleResult\x18\x04 \x01(\x05R\fhandleResult\x12\x1a\n" +
 	"\busername\x18\x06 \x01(\tR\busername\x12$\n" +
-	"\ruserAvatarUrl\x18\a \x01(\tR\ruserAvatarUrl\"0\n" +
+	"\ruserAvatarUrl\x18\a \x01(\tR\ruserAvatarUrl\"F\n" +
 	"\x14GroupPutInHandleResp\x12\x18\n" +
-	"\agroupId\x18\x01 \x01(\tR\agroupId\"&\n" +
+	"\agroupId\x18\x01 \x01(\tR\agroupId\x12\x14\n" +
+	"\x05reqId\x18\x02 \x01(\tR\x05reqId\"&\n" +
 	"\fGroupListReq\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\tR\x06userId\"6\n" +
 	"\rGroupListResp\x12%\n" +
@@ -1647,19 +1656,19 @@ const file_apps_social_rpc_social_proto_rawDesc = "" +
 	"Z\b./socialb\x06proto3"
 
 var (
-	file_apps_social_rpc_social_proto_rawDescOnce sync.Once
-	file_apps_social_rpc_social_proto_rawDescData []byte
+	file_social_proto_rawDescOnce sync.Once
+	file_social_proto_rawDescData []byte
 )
 
-func file_apps_social_rpc_social_proto_rawDescGZIP() []byte {
-	file_apps_social_rpc_social_proto_rawDescOnce.Do(func() {
-		file_apps_social_rpc_social_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_apps_social_rpc_social_proto_rawDesc), len(file_apps_social_rpc_social_proto_rawDesc)))
+func file_social_proto_rawDescGZIP() []byte {
+	file_social_proto_rawDescOnce.Do(func() {
+		file_social_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_social_proto_rawDesc), len(file_social_proto_rawDesc)))
 	})
-	return file_apps_social_rpc_social_proto_rawDescData
+	return file_social_proto_rawDescData
 }
 
-var file_apps_social_rpc_social_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
-var file_apps_social_rpc_social_proto_goTypes = []any{
+var file_social_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_social_proto_goTypes = []any{
 	(*Friends)(nil),               // 0: social.Friends
 	(*FriendRequests)(nil),        // 1: social.FriendRequests
 	(*Group)(nil),                 // 2: social.Group
@@ -1686,7 +1695,7 @@ var file_apps_social_rpc_social_proto_goTypes = []any{
 	(*GroupusersReq)(nil),         // 23: social.GroupusersReq
 	(*GroupusersResp)(nil),        // 24: social.GroupusersResp
 }
-var file_apps_social_rpc_social_proto_depIdxs = []int32{
+var file_social_proto_depIdxs = []int32{
 	1,  // 0: social.FriendPutInListResp.friendReqs:type_name -> social.FriendRequests
 	0,  // 1: social.FriendListResp.friends:type_name -> social.Friends
 	4,  // 2: social.GroupPutinListResp.groupReqs:type_name -> social.GroupRequests
@@ -1719,26 +1728,26 @@ var file_apps_social_rpc_social_proto_depIdxs = []int32{
 	0,  // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_apps_social_rpc_social_proto_init() }
-func file_apps_social_rpc_social_proto_init() {
-	if File_apps_social_rpc_social_proto != nil {
+func init() { file_social_proto_init() }
+func file_social_proto_init() {
+	if File_social_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_apps_social_rpc_social_proto_rawDesc), len(file_apps_social_rpc_social_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_proto_rawDesc), len(file_social_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_apps_social_rpc_social_proto_goTypes,
-		DependencyIndexes: file_apps_social_rpc_social_proto_depIdxs,
-		MessageInfos:      file_apps_social_rpc_social_proto_msgTypes,
+		GoTypes:           file_social_proto_goTypes,
+		DependencyIndexes: file_social_proto_depIdxs,
+		MessageInfos:      file_social_proto_msgTypes,
 	}.Build()
-	File_apps_social_rpc_social_proto = out.File
-	file_apps_social_rpc_social_proto_goTypes = nil
-	file_apps_social_rpc_social_proto_depIdxs = nil
+	File_social_proto = out.File
+	file_social_proto_goTypes = nil
+	file_social_proto_depIdxs = nil
 }

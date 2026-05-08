@@ -6,6 +6,7 @@ package group
 import (
 	"context"
 
+	"github.com/IM_System/apps/im/rpc/imclient"
 	"github.com/IM_System/apps/social/api/internal/svc"
 	"github.com/IM_System/apps/social/api/internal/types"
 	"github.com/IM_System/apps/social/rpc/social"
@@ -31,20 +32,30 @@ func NewGroupPutInHandleLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 }
 
 func (l *GroupPutInHandleLogic) GroupPutInHandle(req *types.GroupPutInHandleRep) (resp *types.GroupPutInHandleResp, err error) {
-	// todo: add your logic here and delete this line
 
-	_, err = l.svcCtx.SocialRpc.GroupPutInHandle(l.ctx, &social.GroupPutInHandleReq{
+	handleResp, err := l.svcCtx.SocialRpc.GroupPutInHandle(l.ctx, &social.GroupPutInHandleReq{
 		GroupReqId:   req.GroupReqId,
 		GroupId:      req.GroupId,
 		HandleUid:    ctxdata.GetUid(l.ctx),
 		HandleResult: req.HandleResult,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	if constants.HandlerResult(req.HandleResult) != constants.PassHandlerResult {
 		return
 	}
 
-	// todo: 通过后的业务
+	// step1：创建申请人和群的会话
+	_, err = l.svcCtx.ImRpc.SetUpUserConversation(l.ctx, &imclient.SetUpUserConversationReq{
+		SendId:   handleResp.ReqId,
+		RecvId:   handleResp.GroupId,
+		ChatType: int32(constants.GroupChatType),
+	})
+	if err != nil {
+		logx.Errorf("ImRpc.SetUpUserConversation failed: %v", err)
+	}
 
 	return
 }

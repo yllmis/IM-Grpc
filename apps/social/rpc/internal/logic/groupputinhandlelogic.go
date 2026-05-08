@@ -39,7 +39,7 @@ func (l *GroupPutInHandleLogic) GroupPutInHandle(in *social.GroupPutInHandleReq)
 
 	groupReq, err := l.svcCtx.GroupRequestsModel.FindOne(l.ctx, int64(in.GroupReqId))
 	if err != nil {
-		return nil, errors.Wrapf(xerr.NewDBErr(), "find friend req err %v req %v", err, in.GroupReqId)
+		return nil, errors.Wrapf(xerr.NewDBErr(), "find group req err %v req %v", err, in.GroupReqId)
 	}
 
 	switch constants.HandlerResult(groupReq.HandleResult.Int64) {
@@ -56,7 +56,7 @@ func (l *GroupPutInHandleLogic) GroupPutInHandle(in *social.GroupPutInHandleReq)
 
 	err = l.svcCtx.GroupRequestsModel.Trans(l.ctx, func(ctx context.Context, session sqlx.Session) error {
 		if err := l.svcCtx.GroupRequestsModel.Update(l.ctx, session, groupReq); err != nil {
-			return errors.Wrapf(xerr.NewDBErr(), "update friend req err %v req %v", err, groupReq)
+			return errors.Wrapf(xerr.NewDBErr(), "update group req err %v req %v", err, groupReq)
 		}
 
 		if constants.HandlerResult(groupReq.HandleResult.Int64) != constants.PassHandlerResult {
@@ -76,5 +76,8 @@ func (l *GroupPutInHandleLogic) GroupPutInHandle(in *social.GroupPutInHandleReq)
 		return nil
 	})
 
-	return &social.GroupPutInHandleResp{}, err
+	return &social.GroupPutInHandleResp{
+		GroupId: groupReq.GroupId,
+		ReqId:   groupReq.ReqId,
+	}, err
 }

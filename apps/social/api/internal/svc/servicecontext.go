@@ -4,6 +4,7 @@
 package svc
 
 import (
+	"github.com/IM_System/apps/im/rpc/imclient"
 	"github.com/IM_System/apps/social/api/internal/config"
 	"github.com/IM_System/apps/social/rpc/socialclient"
 	"github.com/IM_System/apps/user/rpc/userclient"
@@ -38,6 +39,7 @@ type ServiceContext struct {
 
 	UserRpc   userclient.User
 	SocialRpc socialclient.Social
+	ImRpc     imclient.Im
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -52,5 +54,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		SocialRpc: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc,
 			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)),
 			zrpc.WithUnaryClientInterceptor(interceptor.DefaultIdempotentClient))),
+		ImRpc: imclient.NewIm(zrpc.MustNewClient(c.ImRpc)),
 	}
 }

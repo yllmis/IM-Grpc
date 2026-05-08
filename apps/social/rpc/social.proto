@@ -132,6 +132,7 @@ message GroupPutInHandleReq {
 }
 message GroupPutInHandleResp {
     string groupId = 1;
+    string reqId = 2;
 }
 
 message GroupListReq {
