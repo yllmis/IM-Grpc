@@ -102,13 +102,19 @@ func (m *defaultGroupsModel) Insert(ctx context.Context, session sqlx.Session, d
 }
 
 func (m *defaultGroupsModel) ListByGroupIds(ctx context.Context, ids []string) ([]*Groups, error) {
-	query := fmt.Sprintf("select %s from %s where `id` in (?)", groupsRows, m.table)
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	query := fmt.Sprintf("select %s from %s where `id` in (%s)", groupsRows, m.table, strings.Join(placeholders, ","))
 
 	var resp []*Groups
-
-	idStr := strings.Join(ids, "','")
-	err := m.QueryRowsNoCacheCtx(ctx, &resp, query, idStr)
-
+	err := m.QueryRowsNoCacheCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
 		return resp, nil

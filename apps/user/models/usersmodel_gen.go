@@ -120,11 +120,19 @@ func (m *defaultUsersModel) ListByName(ctx context.Context, name string) ([]*Use
 }
 
 func (m *defaultUsersModel) ListByIds(ctx context.Context, ids []string) ([]*Users, error) {
-
-	query := fmt.Sprintf("select %s from %s where `id` in ('%s')", usersRows, m.table, strings.Join(ids, "','"))
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	query := fmt.Sprintf("select %s from %s where `id` in (%s)", usersRows, m.table, strings.Join(placeholders, ","))
 
 	var resp []*Users
-	err := m.QueryRowsNoCacheCtx(ctx, &resp, query)
+	err := m.QueryRowsNoCacheCtx(ctx, &resp, query, args...)
 	switch err {
 	case nil:
 		return resp, nil
