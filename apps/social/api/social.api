@@ -21,6 +21,9 @@ type (
 		ReqTime      int64  `json:"req_time,omitempty"`
 		HandleResult int    `json:"handle_result,omitempty"`
 		HandleMsg    string `json:"handle_msg,omitempty"`
+		// 用户信息
+		Nickname string `json:"nickname,omitempty"`
+		Avatar   string `json:"avatar,omitempty"`
 	}
 	Groups {
 		Id              string `json:"id,omitempty"`
