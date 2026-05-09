@@ -57,5 +57,6 @@ func (l *GroupPutInHandleLogic) GroupPutInHandle(req *types.GroupPutInHandleRep)
 		logx.Errorf("ImRpc.SetUpUserConversation failed: %v", err)
 	}
 
+	// step2: 通知群成员有新成员加入 （todo）
 	return
 }

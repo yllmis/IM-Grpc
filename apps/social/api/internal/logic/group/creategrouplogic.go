@@ -6,6 +6,7 @@ package group
 import (
 	"context"
 
+	"github.com/IM_System/apps/im/rpc/imclient"
 	"github.com/IM_System/apps/social/api/internal/svc"
 	"github.com/IM_System/apps/social/api/internal/types"
 	"github.com/IM_System/apps/social/rpc/social"
@@ -35,7 +36,7 @@ func (l *CreateGroupLogic) CreateGroup(req *types.GroupCreateReq) (resp *types.G
 	uid := ctxdata.GetUid(l.ctx)
 
 	// 创建群
-	_, err = l.svcCtx.SocialRpc.GroupCreate(l.ctx, &social.GroupCreateReq{
+	groupResp, err := l.svcCtx.SocialRpc.GroupCreate(l.ctx, &social.GroupCreateReq{
 		Name:       req.Name,
 		Icon:       req.Icon,
 		CreatorUid: uid,
@@ -43,5 +44,11 @@ func (l *CreateGroupLogic) CreateGroup(req *types.GroupCreateReq) (resp *types.G
 	if err != nil {
 		return nil, err
 	}
+
+	// 创建群会话
+	_, err = l.svcCtx.ImRpc.CreateGroupConversation(l.ctx, &imclient.CreateGroupConversationReq{
+		GroupId:  groupResp.Id,
+		CreateId: uid,
+	})
 	return
 }
