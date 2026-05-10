@@ -42,7 +42,14 @@ func Chat(svc *svc.ServiceContext) websocket.HandlerFunc {
 
 		if err != nil {
 			srv.Send(websocket.NewErrMessgae(err), conn)
+			return
 		}
+
+		// 业务ACK：消息已成功进入处理链路
+		srv.Send(websocket.NewMessage(conn.Uid, map[string]interface{}{
+			"msgId":  msg.Id,
+			"status": "sent",
+		}), conn)
 	}
 
 }
