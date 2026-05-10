@@ -23,6 +23,8 @@ type ServiceContext struct {
 
 	immodels.ConversationModel
 
+	immodels.ConversationsModel
+
 	socialclient.Social
 }
 
@@ -35,6 +37,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		ChatLogModel: immodels.MustChatLogModel(c.Mongo.Url, c.Mongo.Db),
 
 		ConversationModel: immodels.MustConversationModel(c.Mongo.Url, c.Mongo.Db),
+
+		ConversationsModel: immodels.MustConversationsModel(c.Mongo.Url, c.Mongo.Db),
 
 		Social: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc)),
 	}

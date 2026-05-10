@@ -32,7 +32,6 @@ func single(srv *websocket.Server, data *ws.Push, RecvId string) error {
 	// 发送的目标
 	rconn := srv.GetConn(RecvId)
 	if rconn == nil {
-		// todo:用户不在线，消息可以存储到数据库中，等用户上线后再推送
 		return nil
 	}
 

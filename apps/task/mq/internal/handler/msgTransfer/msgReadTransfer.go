@@ -128,12 +128,12 @@ func (m *MsgReadTransfer) UpdateChatLogRead(ctx context.Context, data *mq.MsgMar
 	for _, chatlog := range chatlogs {
 		switch chatlog.ChatType {
 		case constants.SingleChatType:
-			// 私聊，直接更新
-			chatlog.ReadRecords = []byte{1} // 已读
+			// 私聊，直接设置为已读
+			chatlog.ReadRecords = []byte{1}
 		case constants.GroupChatType:
-			// 群聊，更新对应用户的已读状态
+			// 群聊，设置对应用户的位为已读
 			readRecords := bitmap.Load(chatlog.ReadRecords)
-			readRecords.Set(data.SendId) // 标记为已读
+			readRecords.Set(data.SendId) // 设置对应用户的位为已读
 			chatlog.ReadRecords = readRecords.Export()
 		}
 
@@ -145,7 +145,37 @@ func (m *MsgReadTransfer) UpdateChatLogRead(ctx context.Context, data *mq.MsgMar
 		}
 	}
 
+	// 更新用户的会话同步点（清零未读数）
+	go m.updateUserConversationTotal(data.SendId, data.ConversationId)
+
 	return res, nil
+}
+
+func (m *MsgReadTransfer) updateUserConversationTotal(userId, conversationId string) {
+	ctx := context.Background()
+
+	// 获取当前会话的最新消息总量
+	conversation, err := m.svcCtx.ConversationModel.FindOne(ctx, conversationId)
+	if err != nil {
+		m.Errorf("find conversation err %v, conversationId %s", err, conversationId)
+		return
+	}
+
+	// 获取用户的会话列表
+	conversations, err := m.svcCtx.ConversationsModel.FindByUserId(ctx, userId)
+	if err != nil {
+		m.Errorf("find conversations err %v, userId %s", err, userId)
+		return
+	}
+
+	// 更新该会话的同步点为最新消息总量
+	if conv, ok := conversations.ConversationList[conversationId]; ok {
+		conv.Total = conversation.Total
+		_, err = m.svcCtx.ConversationsModel.Update(ctx, conversations)
+		if err != nil {
+			m.Errorf("update conversations err %v, userId %s", err, userId)
+		}
+	}
 }
 
 func (m *MsgReadTransfer) transfer() {
