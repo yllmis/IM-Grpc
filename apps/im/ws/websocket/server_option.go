@@ -17,6 +17,8 @@ type serverOption struct {
 	maxIdleConnection time.Duration
 
 	concurrency int
+
+	onClose func(uid string)
 }
 
 func newServerOptions(opts ...ServerOptions) serverOption {
@@ -68,5 +70,11 @@ func WithSendErrCount(count int) ServerOptions {
 		if count > 0 {
 			opt.sendErrCount = count
 		}
+	}
+}
+
+func WithOnClose(fn func(uid string)) ServerOptions {
+	return func(opt *serverOption) {
+		opt.onClose = fn
 	}
 }

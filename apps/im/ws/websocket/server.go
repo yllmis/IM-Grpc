@@ -430,6 +430,10 @@ func (s *Server) Close(conn *Conn) {
 	delete(s.userToConn, uid)
 
 	conn.Close()
+
+	if s.opt.onClose != nil {
+		s.opt.onClose(uid)
+	}
 }
 
 // 添加路由

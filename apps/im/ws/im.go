@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/IM_System/apps/im/ws/internal/handler"
 	"github.com/IM_System/apps/im/ws/internal/svc"
 	"github.com/IM_System/apps/im/ws/websocket"
+	"github.com/IM_System/pkg/constants"
 	"github.com/zeromicro/go-zero/core/conf"
 )
 
@@ -28,6 +30,9 @@ func main() {
 		websocket.WithAuthentication(handler.NewJwtAuth(ctx)),
 		websocket.WithMaxIdleConnectionIdle(1000*time.Second),
 		// websocket.WithAck(websocket.RigorAck),
+		websocket.WithOnClose(func(uid string) {
+			ctx.Redis.HdelCtx(context.Background(), constants.REDIS_ONLINE_USERS, uid)
+		}),
 	)
 	defer srv.Stop()
 
