@@ -8,11 +8,34 @@ import (
 	"github.com/IM_System/apps/im/rpc/imclient"
 	"github.com/IM_System/apps/social/rpc/socialclient"
 	"github.com/IM_System/apps/user/rpc/userclient"
+	"github.com/IM_System/pkg/interceptor"
+	"github.com/IM_System/pkg/middleware"
+	"github.com/zeromicro/go-zero/core/stores/redis"
+	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
+	"google.golang.org/grpc"
 )
+
+var retryPolicy = `{
+  "methodConfig": [{
+    "name": [{"service": "im.Im"},{"service": "user.User"},{"service": "social.Social"}],
+    "waitForReady": true,
+    "retryPolicy": {
+      "MaxAttempts": 5,
+      "InitialBackoff": "0.001s",
+      "MaxBackoff": "0.002s",
+      "BackoffMultiplier": 1.0,
+      "RetryableStatusCodes": ["UNKNOWN","DEADLINE_EXCEEDED"]
+    }
+  }]
+}`
 
 type ServiceContext struct {
 	Config config.Config
+
+	IdempotenceMiddleware rest.Middleware
+	LimitMiddleware       rest.Middleware
+	*redis.Redis
 
 	imclient.Im
 	userclient.User
@@ -22,8 +45,17 @@ type ServiceContext struct {
 func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
 		Config: c,
-		Im:     imclient.NewIm(zrpc.MustNewClient(c.ImRpc)),
-		User:   userclient.NewUser(zrpc.MustNewClient(c.UserRpc)),
-		Social: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc)),
+
+		IdempotenceMiddleware: middleware.NewIdempotenceMiddleware().Handler,
+		LimitMiddleware:       middleware.NewLimitMiddleware(c.Redisx).TokenLimitHandler(1, 100),
+		Redis:                 redis.MustNewRedis(c.Redisx),
+
+		Im: imclient.NewIm(zrpc.MustNewClient(c.ImRpc,
+			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)),
+			zrpc.WithUnaryClientInterceptor(interceptor.DefaultIdempotentClient))),
+		User: userclient.NewUser(zrpc.MustNewClient(c.UserRpc,
+			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
+		Social: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc,
+			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
 	}
 }

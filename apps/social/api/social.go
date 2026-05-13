@@ -12,9 +12,11 @@ import (
 	"github.com/IM_System/apps/social/api/internal/handler"
 	"github.com/IM_System/apps/social/api/internal/svc"
 	"github.com/IM_System/pkg/configserver"
+	"github.com/IM_System/pkg/resultx"
 
 	"github.com/zeromicro/go-zero/core/proc"
 	"github.com/zeromicro/go-zero/rest"
+	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
 var configFile = flag.String("f", "etc/dev/social copy.yaml", "the config file")
@@ -68,6 +70,9 @@ func Run(c config.Config) {
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
+
+	httpx.SetErrorHandlerCtx(resultx.ErrHandler(c.Name))
+	httpx.SetOkHandler(resultx.OkHandler)
 
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	server.Start()

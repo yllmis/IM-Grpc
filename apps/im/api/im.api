@@ -64,6 +64,7 @@ type (
 @server (
 	prefix: v1/im
 	jwt:    JwtAuth
+	middleware: LimitMiddleware
 )
 service im {
 	@doc "根据用户获取聊天记录"

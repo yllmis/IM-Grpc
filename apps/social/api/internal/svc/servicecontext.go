@@ -18,15 +18,15 @@ import (
 
 var retryPolicy = `{
   "methodConfig": [{
-	"name": [{"service": "social.Social"}],
-	"waitForReady": true,
-	"retryPolicy": {
-	  "MaxAttempts": 5,
-	  "InitialBackoff": "0.001s",
-	  "MaxBackoff": "0.002s",
-	  "BackoffMultiplier": 1.0,
-	  "RetryableStatusCodes": ["UNKNOWN","DEADLINE_EXCEEDED"]
-	}
+    "name": [{"service": "social.Social"},{"service": "user.User"},{"service": "im.Im"}],
+    "waitForReady": true,
+    "retryPolicy": {
+      "MaxAttempts": 5,
+      "InitialBackoff": "0.001s",
+      "MaxBackoff": "0.002s",
+      "BackoffMultiplier": 1.0,
+      "RetryableStatusCodes": ["UNKNOWN","DEADLINE_EXCEEDED"]
+    }
   }]
 }`
 
@@ -50,10 +50,12 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		LimitMiddleware:       middleware.NewLimitMiddleware(c.Redisx).TokenLimitHandler(1, 100),
 		Redis:                 redis.MustNewRedis(c.Redisx),
 
-		UserRpc: userclient.NewUser(zrpc.MustNewClient(c.UserRpc)),
+		UserRpc: userclient.NewUser(zrpc.MustNewClient(c.UserRpc,
+			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
 		SocialRpc: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc,
 			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)),
 			zrpc.WithUnaryClientInterceptor(interceptor.DefaultIdempotentClient))),
-		ImRpc: imclient.NewIm(zrpc.MustNewClient(c.ImRpc)),
+		ImRpc: imclient.NewIm(zrpc.MustNewClient(c.ImRpc,
+			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
 	}
 }

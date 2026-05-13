@@ -15,38 +15,29 @@ import (
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
-		[]rest.Route{
-			{
-				// 好友在线情况
-				Method:  http.MethodGet,
-				Path:    "/friend/online",
-				Handler: friend.FriendOnlineHandler(serverCtx),
-			},
-			{
-				// 好友申请
-				Method:  http.MethodPost,
-				Path:    "/friend/putIn",
-				Handler: friend.FriendPutInHandler(serverCtx),
-			},
-			{
-				// 好友申请处理
-				Method:  http.MethodPut,
-				Path:    "/friend/putIn",
-				Handler: friend.FriendPutInHandleHandler(serverCtx),
-			},
-			{
-				// 好友申请列表
-				Method:  http.MethodGet,
-				Path:    "/friend/putIns",
-				Handler: friend.FriendPutInListHandler(serverCtx),
-			},
-			{
-				// 好友列表
-				Method:  http.MethodGet,
-				Path:    "/friends",
-				Handler: friend.FriendListHandler(serverCtx),
-			},
-		},
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.LimitMiddleware},
+			[]rest.Route{
+				{
+					// 好友在线情况
+					Method:  http.MethodGet,
+					Path:    "/friend/online",
+					Handler: friend.FriendOnlineHandler(serverCtx),
+				},
+				{
+					// 好友申请列表
+					Method:  http.MethodGet,
+					Path:    "/friend/putIns",
+					Handler: friend.FriendPutInListHandler(serverCtx),
+				},
+				{
+					// 好友列表
+					Method:  http.MethodGet,
+					Path:    "/friends",
+					Handler: friend.FriendListHandler(serverCtx),
+				},
+			}...,
+		),
 		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
 		rest.WithPrefix("/v1/social"),
 	)
@@ -56,28 +47,32 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.IdempotenceMiddleware, serverCtx.LimitMiddleware},
 			[]rest.Route{
 				{
-					// 创群
+					// 好友申请
 					Method:  http.MethodPost,
-					Path:    "/group",
-					Handler: group.CreateGroupHandler(serverCtx),
+					Path:    "/friend/putIn",
+					Handler: friend.FriendPutInHandler(serverCtx),
 				},
+				{
+					// 好友申请处理
+					Method:  http.MethodPut,
+					Path:    "/friend/putIn",
+					Handler: friend.FriendPutInHandleHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/v1/social"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.LimitMiddleware},
+			[]rest.Route{
 				{
 					// 群在线用户
 					Method:  http.MethodGet,
 					Path:    "/group/online",
 					Handler: group.GroupOnlineHandler(serverCtx),
-				},
-				{
-					// 申请进群
-					Method:  http.MethodPost,
-					Path:    "/group/putIn",
-					Handler: group.GroupPutInHandler(serverCtx),
-				},
-				{
-					// 申请进群处理
-					Method:  http.MethodPut,
-					Path:    "/group/putIn",
-					Handler: group.GroupPutInHandleHandler(serverCtx),
 				},
 				{
 					// 申请进群列表
@@ -96,6 +91,34 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodGet,
 					Path:    "/groups",
 					Handler: group.GroupListHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),
+		rest.WithPrefix("/v1/social"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.IdempotenceMiddleware, serverCtx.LimitMiddleware},
+			[]rest.Route{
+				{
+					// 创群
+					Method:  http.MethodPost,
+					Path:    "/group",
+					Handler: group.CreateGroupHandler(serverCtx),
+				},
+				{
+					// 申请进群
+					Method:  http.MethodPost,
+					Path:    "/group/putIn",
+					Handler: group.GroupPutInHandler(serverCtx),
+				},
+				{
+					// 申请进群处理
+					Method:  http.MethodPut,
+					Path:    "/group/putIn",
+					Handler: group.GroupPutInHandleHandler(serverCtx),
 				},
 			}...,
 		),

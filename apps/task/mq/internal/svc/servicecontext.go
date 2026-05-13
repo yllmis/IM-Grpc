@@ -10,7 +10,22 @@ import (
 	"github.com/IM_System/pkg/constants"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/zrpc"
+	"google.golang.org/grpc"
 )
+
+var retryPolicy = `{
+  "methodConfig": [{
+    "name": [{"service": "social.Social"}],
+    "waitForReady": true,
+    "retryPolicy": {
+      "MaxAttempts": 5,
+      "InitialBackoff": "0.001s",
+      "MaxBackoff": "0.002s",
+      "BackoffMultiplier": 1.0,
+      "RetryableStatusCodes": ["UNKNOWN","DEADLINE_EXCEEDED"]
+    }
+  }]
+}`
 
 type ServiceContext struct {
 	config.Config
@@ -40,7 +55,8 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 		ConversationsModel: immodels.MustConversationsModel(c.Mongo.Url, c.Mongo.Db),
 
-		Social: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc)),
+		Social: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc,
+			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
 	}
 
 	token, err := svc.GetSystemToken()
