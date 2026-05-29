@@ -1,0 +1,122 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  REGISTRY: crpi-x7po5hftx788xubp.cn-hangzhou.personal.cr.aliyuncs.com
+  IMAGE_PREFIX: yllmis-im
+
+jobs:
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - server: user
+            type: rpc
+          - server: user
+            type: api
+          - server: social
+            type: rpc
+          - server: social
+            type: api
+          - server: im
+            type: rpc
+          - server: im
+            type: api
+          - server: im
+            type: ws
+          - server: task
+            type: mq
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Login to Alibaba CR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.ALIYUN_CR_USER }}
+          password: ${{ secrets.ALIYUN_CR_PASSWORD }}
+
+      - name: Build binary
+        run: |
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
+            go build -o bin/${{ matrix.server }}-${{ matrix.type }} \
+            ./apps/${{ matrix.server }}/${{ matrix.type }}/${{ matrix.server }}.go
+
+      - name: Build Docker image
+        run: |
+          docker build --platform linux/amd64 \
+            -f deploy/dockerfile/Dockerfile_${{ matrix.server }}_${{ matrix.type }}_dev \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.server }}-${{ matrix.type }}-dev:${{ github.ref_name }} \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.server }}-${{ matrix.type }}-dev:latest \
+            .
+
+      - name: Push to registry
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.server }}-${{ matrix.type }}-dev:${{ github.ref_name }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.server }}-${{ matrix.type }}-dev:latest
+
+  deploy:
+    name: Deploy to Server
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            REGISTRY="crpi-x7po5hftx788xubp.cn-hangzhou.personal.cr.aliyuncs.com/yllmis-im"
+            NETWORK="im-grpc_yllmis-im"  # docker-compose project_name + network_name
+            CONF_DIR="/home/ubuntu/go_projects/IM-Grpc/apps"
+            POD_IP="${{ secrets.DEPLOY_HOST }}"
+
+            # 定义服务: name server type port
+            SERVICES=(
+              "user-rpc user rpc 10000"
+              "user-api user api 8888"
+              "social-rpc social rpc 10001"
+              "social-api social api 8881"
+              "im-rpc im rpc 10002"
+              "im-api im api 8882"
+              "im-ws im ws 10090"
+              "task-mq task mq 0"
+            )
+
+            for svc in "${SERVICES[@]}"; do
+              read -r name server type port <<< "$svc"
+              image="${REGISTRY}/${name}-dev:latest"
+              container="yllmis-im-${name}-test"
+
+              echo "=== Deploying ${name} ==="
+              docker stop ${container} 2>/dev/null || true
+              docker rm ${container} 2>/dev/null || true
+              docker rmi ${image} 2>/dev/null || true
+              docker pull ${image}
+
+              if [ "${port}" = "0" ]; then
+                docker run -e POD_IP=${POD_IP} --network ${NETWORK} \
+                  -v ${CONF_DIR}/${server}/${type}/etc/dev/${server}.yaml:/${server}/conf/${server}.yaml \
+                  --name=${container} -d ${image}
+              else
+                docker run -p ${port}:${port} -e POD_IP=${POD_IP} --network ${NETWORK} \
+                  -v ${CONF_DIR}/${server}/${type}/etc/dev/${server}.yaml:/${server}/conf/${server}.yaml \
+                  --name=${container} -d ${image}
+              fi
+            done
+
+            echo "=== All services deployed ==="
+            docker ps | grep yllmis-im

@@ -1,0 +1,11 @@
+.git
+.github
+.vscode
+.DS_Store
+*.md
+docs/
+test/
+bin/
+node_modules/
+deploy/mk/
+deploy/script/
