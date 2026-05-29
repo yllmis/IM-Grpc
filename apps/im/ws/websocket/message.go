@@ -26,8 +26,8 @@ type Message struct {
 	FrameType `json:"frameType"`
 	Id        string      `json:"id"`
 	AckSeq    int         `json:"ackSeq"`
-	ackTime   time.Time   `json:"ackTime"`
-	errCount  int         `json:"errCount"` // 消息重试次数，超过一定次数则丢弃
+	ackTime   time.Time
+	errCount  int // 消息重试次数，超过一定次数则丢弃
 	Method    string      `json:"method"`
 	FormId    string      `json:"formId"`
 	Data      interface{} // map[string]interface{}

@@ -12,7 +12,7 @@ var svcCtx *svc.ServiceContext
 
 func init() {
 	var c config.Config
-	conf.MustLoad(filepath.Join("../../etc/dev/user copy.yaml"), &c)
+	conf.MustLoad(filepath.Join("../../etc/dev/user.yaml"), &c)
 
 	svcCtx = svc.NewServiceContext(c)
 }
