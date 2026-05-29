@@ -24,10 +24,10 @@ const (
 // msg, id, seq
 type Message struct {
 	FrameType `json:"frameType"`
-	Id        string      `json:"id"`
-	AckSeq    int         `json:"ackSeq"`
+	Id        string `json:"id"`
+	AckSeq    int    `json:"ackSeq"`
 	ackTime   time.Time
-	errCount  int // 消息重试次数，超过一定次数则丢弃
+	errCount  int         // 消息重试次数，超过一定次数则丢弃
 	Method    string      `json:"method"`
 	FormId    string      `json:"formId"`
 	Data      interface{} // map[string]interface{}
