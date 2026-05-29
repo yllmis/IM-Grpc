@@ -115,7 +115,13 @@ func NewDefaultIdempotent(c redis.RedisConf) Idempotent {
 		Redis: redis.MustNewRedis(c),
 		Cache: cache,
 		method: map[string]bool{
-			"/social.social/GroupCreate": true,
+			// 好友写操作
+			"/social.social/FriendPutIn":       true,
+			"/social.social/FriendPutInHandle":  true,
+			// 群写操作
+			"/social.social/GroupCreate":       true,
+			"/social.social/GroupPutin":        true,
+			"/social.social/GroupPutInHandle":  true,
 		},
 	}
 }
