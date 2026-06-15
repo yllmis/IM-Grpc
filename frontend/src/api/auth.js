@@ -1,6 +1,13 @@
 import { http } from './http'
 
-export function loginByPassword(payload) {
-  // 示例：按你的后端实际接口路径调整
+export function login(payload) {
   return http.post('/v1/user/login', payload)
+}
+
+export function register(payload) {
+  return http.post('/v1/user/register', payload)
+}
+
+export function getUserInfo() {
+  return http.get('/v1/user/getUserInfo')
 }
