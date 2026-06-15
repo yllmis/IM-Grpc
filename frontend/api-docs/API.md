@@ -317,6 +317,8 @@ GET /v1/social/friends
 GET /v1/social/friend/online
 ```
 
+返回**所有好友**的在线状态（不仅是在线的）。
+
 **响应 data**:
 ```json
 {
@@ -327,12 +329,23 @@ GET /v1/social/friend/online
 }
 ```
 
+| 值 | 说明 |
+|----|------|
+| true | 在线（Redis 中存在） |
+| false | 离线 |
+
+**在线状态判定**: 后端通过 `Redis.HGETALL(REDIS_ONLINE_USERS)` 获取所有在线用户 UID，遍历好友列表逐个比对。用户登录 WebSocket 时写入 Redis，断开时删除。
+
+**前端使用**: `friendOnline[friend_uid]` 为 `true` 时显示绿色圆点，`false` 时显示灰色。
+
 ---
 
 #### 发送好友申请
 ```
 POST /v1/social/friend/putIn
 ```
+
+**通过用户 ID 添加好友**（非手机号）。
 
 **请求体**:
 ```json
@@ -342,6 +355,12 @@ POST /v1/social/friend/putIn
   "req_time": 1700000000
 }
 ```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| user_uid | string | 目标用户 UID（必填） |
+| req_msg | string | 验证消息 |
+| req_time | int64 | 申请时间戳 |
 
 ---
 
@@ -399,6 +418,8 @@ PUT /v1/social/friend/putIn
 GET /v1/social/groups
 ```
 
+返回当前用户加入的所有群组。
+
 **响应 data**:
 ```json
 {
@@ -416,6 +437,13 @@ GET /v1/social/groups
   ]
 }
 ```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | int64 | 群 ID（用作 conversationId 和 group_id 参数） |
+| name | string | 群名称 |
+| is_verify | bool | 是否需要验证才能加入 |
+| notification | string | 群公告 |
 
 ---
 
@@ -449,7 +477,7 @@ GET /v1/social/group/users?group_id={id}
       "user_id": "0x00000001000000001",
       "nickname": "张三",
       "user_avatar_url": "https://example.com/avatar.jpg",
-      "role_level": 1,
+      "role_level": 2,
       "inviter_uid": "0x00000001000000001",
       "operator_uid": "0x00000001000000001"
     }
@@ -458,6 +486,10 @@ GET /v1/social/group/users?group_id={id}
 ```
 
 | role_level | 说明 |
+|------------|------|
+| 0 | 普通成员 |
+| 1 | 管理员 |
+| 2 | 群主 |
 |------------|------|
 | 0 | 普通成员 |
 | 1 | 管理员 |
@@ -487,6 +519,8 @@ GET /v1/social/group/online?group_id={id}
 POST /v1/social/group/putIn
 ```
 
+通过群 ID 申请加入群组。
+
 **请求体**:
 ```json
 {
@@ -497,12 +531,22 @@ POST /v1/social/group/putIn
 }
 ```
 
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| group_id | string | 目标群 ID（从群列表获取） |
+| req_msg | string | 申请理由 |
+| join_source | int | 加入来源（1=搜索, 2=邀请等） |
+
 ---
 
 #### 获取加群申请列表
 ```
 GET /v1/social/group/putIns?group_id={id}
 ```
+
+返回指定群组的**待处理**加群申请。
+
+> **权限说明**: 后端当前未做管理员/群主过滤，任何知道 group_id 的用户都可调用。前端应仅在群主/管理员视角展示此列表。
 
 **响应 data**:
 ```json
@@ -523,6 +567,11 @@ GET /v1/social/group/putIns?group_id={id}
   ]
 }
 ```
+
+| 字段 | 说明 |
+|------|------|
+| user_id | 申请人 UID |
+| handle_result | 0=待处理, 1=同意, 2=拒绝 |
 
 ---
 
