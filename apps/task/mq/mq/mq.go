@@ -3,6 +3,11 @@ package mq
 import "github.com/IM_System/pkg/constants"
 
 type MsgChatTransfer struct {
+	// 可选关联 ID；旧生产者不带这些字段，消费者必须兼容空值
+	MessageId       string `json:"messageId,omitempty"`       // 服务端稳定消息 ID（24hex ObjectID）
+	ClientMessageId string `json:"clientMessageId,omitempty"` // 客户端原始 msg.Id
+	CorrelationId   string `json:"correlationId,omitempty"`   // 链路追踪 ID
+
 	ConversationId     string `json:"conversationId"`
 	constants.ChatType `json:"chatType"`
 	SendId             string   `json:"sendId"`

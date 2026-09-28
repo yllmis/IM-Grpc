@@ -1,0 +1,203 @@
+syntax = "proto3";
+
+package operations;
+
+option go_package = "./operations";
+
+// OperationsQuery：IM 通用只读观测查询服务。
+// 时间字段一律 int64 UnixNano（纳秒），禁止与毫秒/秒混用。
+// 只读红线：永久禁止 ExecuteSQL / ExecuteShell / Resend / Modify / Delete / KickUser 等写能力。
+service OperationsQuery {
+  // 排障用最小用户引用（禁止返回 password/token/phone/avatar）
+  rpc FindUserReference(FindUserReferenceRequest) returns (FindUserReferenceResponse);
+
+  // 单条消息元数据摘要（不含正文）；found=false 表示查询成功但无记录
+  rpc GetMessageRecord(GetMessageRecordRequest) returns (GetMessageRecordResponse);
+
+  // 消息生命周期事件流
+  rpc GetMessageTimeline(GetMessageTimelineRequest) returns (GetMessageTimelineResponse);
+
+  // 投递侧事件流（群聊按接收方拆分）
+  rpc GetDeliveryTimeline(GetDeliveryTimelineRequest) returns (GetDeliveryTimelineResponse);
+
+  // 连接状态历史观察（区分当前在线与历史在线）
+  rpc GetConnectionObservations(GetConnectionObservationsRequest) returns (GetConnectionObservationsResponse);
+
+  // 诚实的能力声明，取值仅 supported|partial|unsupported
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+}
+
+// ---------- common ----------
+
+// coverageStatus 只能是 complete | partial | unknown。
+// 存在观测缺口时禁止返回 complete。
+
+// ---------- FindUserReference ----------
+
+message FindUserReferenceRequest {
+  string userId = 1;    // 精确用户 ID
+  string nickname = 2;  // 昵称匹配，多命中全部返回
+  string phone = 3;     // 可选精确匹配；响应不回显
+  int32 limit = 4;
+}
+
+message UserReference {
+  string userId = 1;
+  string displayName = 2;
+  int32 status = 3;
+  int64 observedAt = 4; // UnixNano
+}
+
+message FindUserReferenceResponse {
+  repeated UserReference users = 1;
+}
+
+// ---------- GetMessageRecord ----------
+
+message GetMessageRecordRequest {
+  string messageId = 1; // 必填 24hex
+}
+
+message GetMessageRecordResponse {
+  bool found = 1;
+  string messageId = 2;
+  string conversationId = 3;
+  string senderId = 4;
+  string receiverId = 5;
+  int64 createdAt = 6;  // UnixNano
+  string source = 7;    // chat_log | compat-legacy | events-only
+  int64 observedAt = 8; // UnixNano
+  int32 chatType = 9;
+  int32 msgType = 10;
+  // 已读摘要：known | unknown | approximate；不返回 bitmap 与用户列表
+  string readState = 11;
+  string readStateNote = 12;
+  bool eventsAvailable = 13;
+  string note = 14;
+}
+
+// ---------- MessageEvent / timeline ----------
+
+message MessageEvent {
+  string eventId = 1;
+  int32 eventVersion = 2;
+  string eventType = 3;
+  string messageId = 4;
+  string clientMessageId = 5;
+  string correlationId = 6;
+  string conversationId = 7;
+  string senderId = 8;
+  string receiverId = 9;
+  string attemptId = 10;
+  int64 occurredAt = 11; // UnixNano
+  string source = 12;
+  string errorCode = 13;
+  int64 sequence = 14;
+  map<string, string> metadata = 15;
+}
+
+message GetMessageTimelineRequest {
+  string messageId = 1;
+  int64 startTime = 2; // UnixNano，0=不限
+  int64 endTime = 3;   // UnixNano，0=不限
+  int32 limit = 4;
+  string cursor = 5;
+}
+
+message GetMessageTimelineResponse {
+  repeated MessageEvent events = 1;
+  bool complete = 2;
+  bool truncated = 3;
+  string nextCursor = 4;
+  string messageId = 5;
+  string coverageStatus = 6; // complete | partial | unknown
+  uint64 eventsDropped = 7;
+}
+
+// ---------- GetDeliveryTimeline ----------
+
+message GetDeliveryTimelineRequest {
+  string messageId = 1;
+  string receiverId = 2; // 可选
+  int32 limit = 3;
+  string cursor = 4;
+}
+
+message DeliveryEvent {
+  string eventId = 1;
+  string eventType = 2; // delivery_* / receiver_offline / ack_*
+  string messageId = 3;
+  string receiverId = 4;
+  string attemptId = 5;
+  int64 occurredAt = 6; // UnixNano
+  string source = 7;
+  string errorCode = 8;
+  map<string, string> metadata = 9;
+  string evidence = 10; // gateway-write | transport-ack | offline-marker | legacy
+}
+
+message GetDeliveryTimelineResponse {
+  repeated DeliveryEvent events = 1;
+  bool complete = 2;
+  bool truncated = 3;
+  string nextCursor = 4;
+  string messageId = 5;
+  string coverageStatus = 6;
+  uint64 eventsDropped = 7;
+}
+
+// ---------- GetConnectionObservations ----------
+
+message GetConnectionObservationsRequest {
+  string userId = 1;
+  int64 at = 2;        // UnixNano 时间点；与时间范围互斥
+  int64 startTime = 3; // UnixNano
+  int64 endTime = 4;   // UnixNano
+  int32 limit = 5;
+  string cursor = 6;
+  bool includeCurrent = 7;
+}
+
+message ConnectionObservation {
+  string connectionId = 1;
+  string instanceId = 2;
+  string state = 3; // online | offline
+  int64 observedAt = 4; // UnixNano
+  string reason = 5;
+}
+
+message CurrentConnection {
+  bool online = 1;
+  string connectionId = 2;
+  string instanceId = 3;
+  int64 observedAt = 4; // UnixNano
+  string source = 5;    // ws-conn-table | redis-login | unknown
+}
+
+message GetConnectionObservationsResponse {
+  repeated ConnectionObservation observations = 1;
+  CurrentConnection current = 2;
+  bool complete = 3;
+  bool truncated = 4;
+  string nextCursor = 5;
+  string note = 6;
+  string coverageStatus = 7;
+  uint64 eventsDropped = 8;
+}
+
+// ---------- GetCapabilities ----------
+
+message GetCapabilitiesRequest {}
+
+message GetCapabilitiesResponse {
+  string messageRecord = 1;
+  string messageTimeline = 2;
+  string deliveryEvents = 3;
+  string historicalConnection = 4;
+  string ackHistory = 5;
+  string writeFailureEvents = 6;
+  string readConfirmation = 7;
+  int64 observedAt = 8; // UnixNano
+  string observationEnabled = 9;
+  string ackMode = 10;
+}

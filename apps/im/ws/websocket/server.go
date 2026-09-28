@@ -31,6 +31,20 @@ func (t AckType) ToString() string {
 	return "NoAck"
 }
 
+// ParseAckType 解析 ACK 模式字符串；空串默认 NoAck。
+func ParseAckType(s string) (AckType, error) {
+	switch s {
+	case "", "NoAck":
+		return NoAck, nil
+	case "OnlyAck":
+		return OnlyAck, nil
+	case "RigorAck":
+		return RigorAck, nil
+	default:
+		return NoAck, fmt.Errorf("websocket: invalid AckType %q", s)
+	}
+}
+
 type Server struct {
 	sync.RWMutex
 
@@ -125,6 +139,7 @@ func (s *Server) handleConn(conn *Conn) {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			s.Errorf("websocket conn read message err %v", err)
+			conn.setCloseReason("read-error")
 			s.Close(conn)
 			return
 		}
@@ -133,6 +148,7 @@ func (s *Server) handleConn(conn *Conn) {
 		var message Message
 		if err = json.Unmarshal(msg, &message); err != nil {
 			s.Errorf("websocket unmarshal message err %v, msg %s", err, string(msg))
+			conn.setCloseReason("read-error")
 			s.Close(conn)
 			return
 		}
@@ -157,6 +173,23 @@ func (s *Server) isAck(message *Message) bool {
 	}
 
 	return s.opt.ack != NoAck && message.FrameType != FrameAck
+}
+
+// observeAckReceived 仅在 RigorAck + 显式开启观测时记录真实客户端 ACK。
+// NoAck / OnlyAck 一律不写，禁止伪造。
+func (s *Server) observeAckReceived(conn *Conn, msg *Message) {
+	if s.opt.ack != RigorAck || !s.opt.ackObserve {
+		return
+	}
+	s.opt.observer.OnAckReceived(conn.Uid, msg.Id, msg.AckSeq)
+}
+
+// observeAckTimeout 仅在 RigorAck + 显式开启观测时记录真实超时。
+func (s *Server) observeAckTimeout(conn *Conn, msg *Message) {
+	if s.opt.ack != RigorAck || !s.opt.ackObserve {
+		return
+	}
+	s.opt.observer.OnAckTimeout(conn.Uid, msg.Id, msg.AckSeq)
 }
 
 // 读取的ack确认
@@ -252,6 +285,8 @@ func (s *Server) readAck(conn *Conn) {
 				conn.MessageMu.Unlock()
 				conn.message <- message
 				s.Infof("message ack RigorAck success mid %v, seq %v", message.Id, message.AckSeq)
+				// 旁路：收到真实客户端 ACK（仅 RigorAck）
+				s.observeAckReceived(conn, message)
 				continue
 			}
 
@@ -263,6 +298,8 @@ func (s *Server) readAck(conn *Conn) {
 				conn.readMessage = conn.readMessage[1:]
 				conn.MessageMu.Unlock()
 				s.Infof("message ack RigorAck timeout mid %v, seq %v", message.Id, message.AckSeq)
+				// 旁路：真实超时（仅 RigorAck 且显式开启观测）
+				s.observeAckTimeout(conn, message)
 				continue
 			}
 			// 2.2 未超时，重新发送
@@ -326,17 +363,22 @@ func (s *Server) handleWrite(conn *Conn) {
 
 func (s *Server) addConn(conn *Conn, req *http.Request) {
 	uid := s.authentication.UserId(req)
+	conn.Uid = uid
 
 	s.RWMutex.Lock()
-	defer s.RWMutex.Unlock()
-
 	// 如果用户已经存在，则关闭之前的连接
 	if c := s.userToConn[uid]; c != nil {
-		s.Close(c)
+		// 顶号：先标注原因再关，旧连接走统一 Close 旁路
+		c.setCloseReason("connect-replaced")
+		s.closeConnLocked(c)
 	}
 
 	s.connToUser[conn] = uid
 	s.userToConn[uid] = conn
+	s.RWMutex.Unlock()
+
+	// 旁路：连接建立（在锁外记录，不阻塞连接表）
+	s.opt.observer.OnConnect(uid, conn.Id)
 }
 
 // 根据用户id获取连接
@@ -419,7 +461,11 @@ func (s *Server) GetUsers(conns ...*Conn) []string {
 func (s *Server) Close(conn *Conn) {
 	s.RWMutex.Lock()
 	defer s.RWMutex.Unlock()
+	s.closeConnLocked(conn)
+}
 
+// closeConnLocked 在持有写锁时清理连接；旁路事件在语义上属于 offline 观测。
+func (s *Server) closeConnLocked(conn *Conn) {
 	uid := s.connToUser[conn]
 	if uid == "" {
 		// 已经被关闭
@@ -429,11 +475,15 @@ func (s *Server) Close(conn *Conn) {
 	delete(s.connToUser, conn)
 	delete(s.userToConn, uid)
 
+	reason := conn.getCloseReason()
 	conn.Close()
 
 	if s.opt.onClose != nil {
 		s.opt.onClose(uid)
 	}
+
+	// 旁路：连接断开（含顶号/超时/主动断开）
+	s.opt.observer.OnDisconnect(uid, conn.Id, reason)
 }
 
 // 添加路由

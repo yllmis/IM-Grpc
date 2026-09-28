@@ -12,6 +12,8 @@ type Conn struct {
 	idleMu sync.Mutex
 
 	Uid string
+	// Id 连接唯一标识，用于连接事件观测
+	Id string
 
 	*websocket.Conn
 	s *Server
@@ -26,6 +28,9 @@ type Conn struct {
 	idle              time.Time
 	maxConnectionIdle time.Duration
 
+	closeMu     sync.Mutex
+	closeReason string
+
 	done chan struct{}
 }
 
@@ -39,6 +44,7 @@ func NewConn(s *Server, w http.ResponseWriter, r *http.Request) *Conn {
 	conn := &Conn{
 		Conn:              c,
 		s:                 s,
+		Id:                newConnID(),
 		idle:              time.Now(),
 		maxConnectionIdle: s.opt.maxIdleConnection,
 		readMessage:       make([]*Message, 0, 2),
@@ -49,6 +55,23 @@ func NewConn(s *Server, w http.ResponseWriter, r *http.Request) *Conn {
 
 	go conn.keepAlive()
 	return conn
+}
+
+func (c *Conn) setCloseReason(reason string) {
+	c.closeMu.Lock()
+	defer c.closeMu.Unlock()
+	if c.closeReason == "" {
+		c.closeReason = reason
+	}
+}
+
+func (c *Conn) getCloseReason() string {
+	c.closeMu.Lock()
+	defer c.closeMu.Unlock()
+	if c.closeReason == "" {
+		return "disconnect"
+	}
+	return c.closeReason
 }
 
 func (c *Conn) ReadMessage() (messageType int, p []byte, err error) {
@@ -142,6 +165,7 @@ func (c *Conn) keepAlive() {
 			if val <= 0 {
 				// The connection has been idle for a duration of keepalive.MaxConnectionIdle or more.
 				// Gracefully close the connection.
+				c.setCloseReason("timeout")
 				c.s.Close(c)
 				return
 			}

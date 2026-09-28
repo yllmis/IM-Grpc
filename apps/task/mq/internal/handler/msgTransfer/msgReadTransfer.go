@@ -12,6 +12,7 @@ import (
 	"github.com/IM_System/apps/task/mq/mq"
 	"github.com/IM_System/pkg/bitmap"
 	"github.com/IM_System/pkg/constants"
+	"github.com/IM_System/pkg/observation"
 	"github.com/zeromicro/go-queue/kq"
 	"github.com/zeromicro/go-zero/core/stores/cache"
 )
@@ -143,6 +144,15 @@ func (m *MsgReadTransfer) UpdateChatLogRead(ctx context.Context, data *mq.MsgMar
 		if err != nil {
 			return nil, err
 		}
+
+		// 旁路：业务已读成立（不改已读逻辑；失败不影响已读结果）
+		observation.SafeRecord(ctx, m.svcCtx.ObservationSink, observation.MessageEventBuilder{
+			MessageID:      chatlog.ID.Hex(),
+			ConversationID: data.ConversationId,
+			SenderID:       data.SendId,
+			ReceiverID:     chatlog.RecvId,
+			Source:         observation.SourceTaskMq,
+		}.ReadConfirmed())
 	}
 
 	// 更新用户的会话同步点（清零未读数）

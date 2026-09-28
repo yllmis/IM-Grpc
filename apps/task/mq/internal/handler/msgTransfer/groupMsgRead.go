@@ -26,11 +26,11 @@ type groupMsgRead struct {
 func newGroupMsgRead(push *ws.Push, pushCh chan *ws.Push) *groupMsgRead {
 	m := &groupMsgRead{
 		conversationId: push.ConversationId,
-		push:     push,
-		pushCh:   pushCh,
-		count:    1,
-		pushTime: time.Now(),
-		done:     make(chan struct{}),
+		push:           push,
+		pushCh:         pushCh,
+		count:          1,
+		pushTime:       time.Now(),
+		done:           make(chan struct{}),
 	}
 
 	go m.transfer()

@@ -66,11 +66,24 @@ func Run(c config.Config) {
 	if err := c.SetUp(); err != nil {
 		panic(err)
 	}
+
+	// ACK 双开关必须一致，不一致拒绝启动（见 compatibility-and-rollout.md §5.1）
+	wsAck, obsAck, ackObserve, err := websocket.ResolveAckModes(
+		c.AckMode,
+		c.DeliveryObservation.AckMode,
+		c.DeliveryObservation.Enabled,
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	ctx := svc.NewServiceContext(c)
 	srv := websocket.NewServer(c.ListenOn,
 		websocket.WithAuthentication(handler.NewJwtAuth(ctx)),
 		websocket.WithMaxIdleConnectionIdle(1000*time.Second),
-		// websocket.WithAck(websocket.RigorAck),
+		websocket.WithAck(wsAck),
+		websocket.WithAckObserve(ackObserve),
+		websocket.WithObserver(handler.NewSinkObserver(ctx.ObservationSink, c.DeliveryObservation.InstanceId)),
 		websocket.WithOnClose(func(uid string) {
 			ctx.Redis.HdelCtx(context.Background(), constants.REDIS_ONLINE_USERS, uid)
 		}),
@@ -79,6 +92,7 @@ func Run(c config.Config) {
 
 	handler.RegisterHandlers(srv, ctx)
 
-	fmt.Printf("Starting websocket server at %s...\n", c.ListenOn)
+	fmt.Printf("Starting websocket server at %s... ack=%s obsAck=%s ackObserve=%v\n",
+		c.ListenOn, wsAck.ToString(), obsAck, ackObserve)
 	srv.Start()
 }

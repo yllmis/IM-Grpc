@@ -33,4 +33,13 @@ type Config struct {
 		GroupMsgReadRecordDelayTime  int64
 		GroupMsgReadRecordDelayCount int
 	}
+
+	// DeliveryObservation 观测开关，默认关闭。第一版修改需重启，不做热更新。
+	DeliveryObservation struct {
+		Enabled       bool
+		PersistEvents bool
+		AckMode       string
+		InstanceId    string
+		BufferSize    int
+	}
 }
