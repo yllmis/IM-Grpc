@@ -19,6 +19,7 @@ var (
 
 type chatLogModel interface {
 	Insert(ctx context.Context, data *ChatLog) error
+	InsertIfAbsent(ctx context.Context, data *ChatLog) (bool, error)
 	FindOne(ctx context.Context, id string) (*ChatLog, error)
 	ListByIds(ctx context.Context, msgIds []string) ([]*ChatLog, error)
 	ListBySendTime(ctx context.Context, conversationId string, startSendTime, endSendTime, limit int64) ([]*ChatLog, error)

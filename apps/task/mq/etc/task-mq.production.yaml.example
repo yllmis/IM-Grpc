@@ -1,0 +1,76 @@
+# Safe example only. Real credentials and addresses belong in Sail or environment variables.
+Name: task-mq
+ListenOn: 0.0.0.0:10091
+
+MsgChatTransfer:
+  Name: MsgChatTransfer
+  Brokers:
+    - kafka:9092
+  Group: Kafka
+  Topic: msgChatTransfer
+  Offset: first
+  Consumers: 1
+  MinBytes: 1
+  MaxBytes: 10485760
+  ForceCommit: false
+
+MsgReadTransfer:
+  Name: MsgReadTransfer
+  Brokers:
+    - kafka:9092
+  Group: Kafka
+  Topic: msgReadTransfer
+  Offset: first
+  Consumers: 1
+
+MessageProcessingRateLimit:
+  Enabled: true
+  GlobalMessagesPerSecond: 600
+  ExpectedInstances: 1
+  Burst: 1
+
+MessageRetry:
+  Enabled: true
+  MaxAttempts: 3
+  InitialBackoffMs: 100
+  MaxBackoffMs: 2000
+  DeadLetterTopic: msgChatTransfer_dlq
+
+KafkaMonitoring:
+  Enabled: true
+  ListenOn: 0.0.0.0:10092
+  LagIntervalSec: 10
+
+# Increase this only after the Kafka topic has at least this many partitions.
+ConsumerScaling:
+  ExpectedPartitions: 1
+
+MsgReadHandler:
+  GroupMsgReadHandler: 1
+  GroupMsgReadRecordDelayTime: 60
+  GroupMsgReadRecordDelayCount: 2
+
+Redisx:
+  Host: redis:6379
+  Type: node
+  Pass: "${TASK_MQ_REDIS_PASSWORD}"
+
+SocialRpc:
+  Etcd:
+    Hosts:
+      - etcd:2379
+    Key: social.rpc
+
+Mongo:
+  Url: "${TASK_MQ_MONGO_URL}"
+  Db: yllmis-im
+
+Ws:
+  Host: im-ws:10090
+
+DeliveryObservation:
+  Enabled: false
+  PersistEvents: false
+  AckMode: NoAck
+  InstanceId: task-mq
+  BufferSize: 1024

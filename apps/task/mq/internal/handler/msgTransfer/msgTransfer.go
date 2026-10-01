@@ -24,6 +24,9 @@ func NewBaseMsgTransfer(svcCtx *svc.ServiceContext) *baseMsgTransfer {
 }
 
 func (m *baseMsgTransfer) Transfer(ctx context.Context, data *ws.Push) error {
+	if m.svcCtx.Config.LoadTest.PersistenceOnly {
+		return nil
+	}
 	switch data.ChatType {
 	case constants.SingleChatType:
 		return m.single(ctx, data)

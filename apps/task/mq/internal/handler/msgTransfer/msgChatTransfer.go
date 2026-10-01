@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/IM_System/apps/im/immodels"
 	"github.com/IM_System/apps/im/ws/ws"
@@ -22,13 +23,44 @@ func NewMsgChatTransfer(svc *svc.ServiceContext) *MsgChatTransfer {
 	return &MsgChatTransfer{NewBaseMsgTransfer(svc)}
 }
 
-func (m *MsgChatTransfer) Consume(ctx context.Context, key, value string) error { // 消费者，有更新消息时会调用这个方法
-	fmt.Printf("consume msg, key: %s, value: %s\n", key, value)
+func (m *MsgChatTransfer) Consume(ctx context.Context, key, value string) (consumeErr error) { // 消费者，有更新消息时会调用这个方法
+	if !m.svcCtx.Config.LoadTest.PersistenceOnly {
+		fmt.Printf("consume msg, key: %s, value: %s\n", key, value)
+	}
 
 	var data mq.MsgChatTransfer
 
 	if err := json.Unmarshal([]byte(value), &data); err != nil {
 		return err
+	}
+	throttleStarted := time.Now()
+	if m.svcCtx.ChatLimiter != nil {
+		if err := m.svcCtx.ChatLimiter.Wait(ctx); err != nil {
+			return err
+		}
+	}
+	m.svcCtx.Metrics.ObserveThrottle(time.Since(throttleStarted))
+	started := time.Now()
+	if m.svcCtx.Config.LoadTest.PersistenceOnly {
+		defer func() {
+			finished := time.Now()
+			metric := struct {
+				Type            string  `json:"type"`
+				ConversationID  string  `json:"conversationId"`
+				MessageID       string  `json:"messageId"`
+				ProcessingMs    float64 `json:"processingMs"`
+				ThrottleWaitMs  float64 `json:"throttleWaitMs"`
+				ToPersistedMs   float64 `json:"toPersistedMs"`
+				CompletedUnixMs int64   `json:"completedUnixMs"`
+				Success         bool    `json:"success"`
+			}{"loadtest_message", data.ConversationId, data.MessageId,
+				float64(finished.Sub(started).Microseconds()) / 1000,
+				float64(started.Sub(throttleStarted).Microseconds()) / 1000,
+				float64(finished.Sub(time.Unix(0, data.SendTime)).Microseconds()) / 1000,
+				finished.UnixMilli(), consumeErr == nil}
+			encoded, _ := json.Marshal(metric)
+			fmt.Println(string(encoded))
+		}()
 	}
 
 	// 新消息沿用 im-ws 生成的稳定 messageId；旧消息（无 messageId）保持消费端生成旧行为
@@ -52,9 +84,13 @@ func (m *MsgChatTransfer) Consume(ctx context.Context, key, value string) error 
 	observation.SafeRecord(ctx, m.svcCtx.ObservationSink, builder.KafkaConsumed())
 
 	// 记录数据
-	if err := m.addChatLog(ctx, msgId, data); err != nil {
+	inserted, err := m.addChatLog(ctx, msgId, data)
+	if err != nil {
 		observation.SafeRecord(ctx, m.svcCtx.ObservationSink, builder.PersistFailed(observation.ErrCodePersistFailed))
 		return err
+	}
+	if !inserted {
+		m.svcCtx.Metrics.IncDuplicate()
 	}
 
 	observation.SafeRecord(ctx, m.svcCtx.ObservationSink, builder.Persisted())
@@ -72,7 +108,7 @@ func (m *MsgChatTransfer) Consume(ctx context.Context, key, value string) error 
 	})
 }
 
-func (m *MsgChatTransfer) addChatLog(ctx context.Context, msgId bson.ObjectID, data mq.MsgChatTransfer) error {
+func (m *MsgChatTransfer) addChatLog(ctx context.Context, msgId bson.ObjectID, data mq.MsgChatTransfer) (bool, error) {
 	chatLog := &immodels.ChatLog{
 		ID:             msgId,
 		ConversationId: data.ConversationId,
@@ -89,9 +125,12 @@ func (m *MsgChatTransfer) addChatLog(ctx context.Context, msgId bson.ObjectID, d
 	readRecords.Set(chatLog.SendId) // 发送者默认已读
 	chatLog.ReadRecords = readRecords.Export()
 
-	err := m.svcCtx.ChatLogModel.Insert(ctx, chatLog)
+	inserted, err := m.svcCtx.ChatLogModel.InsertIfAbsent(ctx, chatLog)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return m.svcCtx.ConversationModel.UpdateMsg(ctx, chatLog)
+	if !inserted {
+		return false, nil
+	}
+	return true, m.svcCtx.ConversationModel.UpdateMsg(ctx, chatLog)
 }

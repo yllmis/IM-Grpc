@@ -8,10 +8,13 @@ import (
 	"github.com/IM_System/apps/im/ws/websocket"
 	"github.com/IM_System/apps/social/rpc/socialclient"
 	"github.com/IM_System/apps/task/mq/internal/config"
+	"github.com/IM_System/apps/task/mq/internal/dlq"
+	"github.com/IM_System/apps/task/mq/internal/telemetry"
 	"github.com/IM_System/pkg/constants"
 	"github.com/IM_System/pkg/observation"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/zrpc"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 )
 
@@ -46,13 +49,14 @@ type ServiceContext struct {
 
 	// ObservationSink 旁路观测；默认 Noop，失败不影响业务
 	ObservationSink observation.ObservationSink
+	ChatLimiter     *rate.Limiter
+	Metrics         *telemetry.Metrics
+	DeadLetter      dlq.Publisher
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	svc := &ServiceContext{
 		Config: c,
-
-		Redis: redis.MustNewRedis(c.Redisx),
 
 		ChatLogModel: immodels.MustChatLogModel(c.Mongo.Url, c.Mongo.Db),
 
@@ -60,11 +64,32 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 		ConversationsModel: immodels.MustConversationsModel(c.Mongo.Url, c.Mongo.Db),
 
-		Social: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc,
-			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
-
 		ObservationSink: newObservationSink(c),
+		Metrics:         telemetry.NewMetrics(),
 	}
+	if c.MessageProcessingRateLimit.Enabled {
+		perInstance := c.PerInstanceMessagesPerSecond()
+		if perInstance <= 0 {
+			panic("MessageProcessingRateLimit must resolve to a positive per-instance rate")
+		}
+		svc.ChatLimiter = rate.NewLimiter(rate.Limit(perInstance), c.MessageProcessingRateLimit.Burst)
+	} else if c.LoadTest.PersistenceOnly && c.LoadTest.MaxMessagesPerSecond > 0 {
+		// Backwards-compatible path for the untracked isolated load-test harness.
+		svc.ChatLimiter = rate.NewLimiter(rate.Limit(c.LoadTest.MaxMessagesPerSecond), c.LoadTest.Burst)
+	}
+	if c.MessageRetry.Enabled {
+		publisher, err := dlq.NewKafkaPublisher(c.MsgChatTransfer, c.MessageRetry.DeadLetterTopic)
+		if err != nil {
+			panic(err)
+		}
+		svc.DeadLetter = publisher
+	}
+	if c.LoadTest.PersistenceOnly {
+		return svc
+	}
+	svc.Redis = redis.MustNewRedis(c.Redisx)
+	svc.Social = socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc,
+		zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy))))
 
 	token, err := svc.GetSystemToken()
 	if err != nil {
