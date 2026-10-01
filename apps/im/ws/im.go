@@ -64,7 +64,7 @@ func loadConfig(path, source string, onChange configserver.OnChange) (config.Con
 		}
 		return c, nil
 	case "sail":
-		return c, configserver.NewConfigServer(path, configserver.NewSail(&configserver.Config{
+		err := configserver.NewConfigServer(path, configserver.NewSail(&configserver.Config{
 			ETCDEndpoints:  "etcd:2379",
 			ProjectKey:     "98c6f2c2287f4c73cea3d40ae7ec3ff2",
 			Namespace:      "im",
@@ -72,6 +72,7 @@ func loadConfig(path, source string, onChange configserver.OnChange) (config.Con
 			ConfigFilePath: "./conf",
 			LogLevel:       "DEBUG",
 		})).MustLoad(&c, onChange)
+		return c, err
 	default:
 		return c, fmt.Errorf("unknown config-source %q: use sail or local", source)
 	}

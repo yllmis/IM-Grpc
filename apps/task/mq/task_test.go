@@ -10,7 +10,7 @@ import (
 
 func localTestConfigPath(t *testing.T) string {
 	t.Helper()
-	data, err := os.ReadFile("etc/loadtest/task.yaml.example")
+	data, err := os.ReadFile("etc/task-mq.production.yaml.example")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,14 +22,16 @@ func localTestConfigPath(t *testing.T) string {
 }
 
 func TestLocalConfigLoads(t *testing.T) {
-	t.Setenv("LOADTEST_MONGO_URL", "mongodb://localhost:27017")
-	t.Setenv("LOADTEST_REDIS_PASSWORD", "test-only")
+	t.Setenv("TASK_MQ_MONGO_URL", "mongodb://localhost:27017")
+	t.Setenv("TASK_MQ_REDIS_PASSWORD", "test-only")
 	c, err := loadTaskConfig(localTestConfigPath(t), "local", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.Mongo.Db != "yllmis-im-test" || c.MsgChatTransfer.Processors != 8 || !c.LoadTest.PersistenceOnly {
-		t.Fatalf("isolated test routing was not loaded: %+v", c)
+	if c.Mongo.Db != "yllmis-im" || c.Mongo.Url != "mongodb://localhost:27017" ||
+		!c.MessageProcessingRateLimit.Enabled || c.PerInstanceMessagesPerSecond() != 600 ||
+		!c.MessageRetry.Enabled || !c.KafkaMonitoring.Enabled {
+		t.Fatal("production example and environment variables were not loaded correctly")
 	}
 	if _, err := loadTaskConfig("unused.yaml", "invalid", nil); err == nil {
 		t.Fatal("invalid config source accepted")
