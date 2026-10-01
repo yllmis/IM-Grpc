@@ -1,0 +1,53 @@
+.vscode
+
+.DS_Store
+
+.gitignore
+
+IM-Grpc.code-workspace
+
+
+# 忽略所有的配置文件
+*.yaml
+*.yml
+*.json
+
+# 忽略 go-zero 自动生成的没必要提交的文件
+*/etc/*.yaml
+
+# 忽略 Go 编译产物
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# 忽略面试题相关的文件
+docs/
+面试复盘/
+
+# 忽略练习测试文件
+test/
+
+# 不忽略的配置
+!components/logstash/**
+!.github/workflows/**
+
+# Local-only Kafka/Mongo load-test harness and reports. Production code and
+# reusable Go tests are committed; server-specific scripts contain environment
+# assumptions and are intentionally kept out of GitHub.
+/artifacts/kafka-loadtest/
+/apps/task/mq/etc/loadtest/
+/deploy/script/KAFKA-LOADTEST.md
+/deploy/script/analyze-kafka-capacity.py
+/deploy/script/kafka-baseline-test.sh
+/deploy/script/kafka-capacity-test.sh
+/deploy/script/kafka-peak-valley-test.sh
+/deploy/script/prepare-mongo-loadtest.js
+/deploy/script/prepare-mongo-loadtest.sh
+/deploy/script/task-mq-loadtest.sh
+/deploy/script/test-kafka-capacity.py
+/deploy/script/verify-kafka-baseline.py
