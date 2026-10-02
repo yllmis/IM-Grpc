@@ -3,6 +3,7 @@ package svc
 import (
 	"github.com/IM_System/apps/im/immodels"
 	"github.com/IM_System/apps/operations/rpc/internal/config"
+	"github.com/IM_System/apps/operations/rpc/internal/faultinject"
 	"github.com/IM_System/apps/operations/rpc/operationsmodels"
 	"github.com/IM_System/apps/social/rpc/socialclient"
 	"github.com/IM_System/apps/user/rpc/userclient"
@@ -18,15 +19,19 @@ type ServiceContext struct {
 
 	UserRpc   userclient.User
 	SocialRpc socialclient.Social
+
+	// FaultInjection 只改变匹配测试 ID 的查询响应，不触碰 IM 主链路。
+	FaultInjection faultinject.Config
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
-		Config:       c,
-		ChatLogModel: immodels.MustChatLogModel(c.Mongo.Url, c.Mongo.Db),
-		EventModel:   operationsmodels.MustEventModel(c.Mongo.Url, c.Mongo.Db),
-		UserRpc:      userclient.NewUser(zrpc.MustNewClient(c.UserRpc)),
-		SocialRpc:    socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc)),
+		Config:         c,
+		ChatLogModel:   immodels.MustChatLogModel(c.Mongo.Url, c.Mongo.Db),
+		EventModel:     operationsmodels.MustEventModel(c.Mongo.Url, c.Mongo.Db),
+		UserRpc:        userclient.NewUser(zrpc.MustNewClient(c.UserRpc)),
+		SocialRpc:      socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc)),
+		FaultInjection: c.FaultInjection,
 	}
 }
 

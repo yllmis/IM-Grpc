@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 
+	"github.com/IM_System/apps/operations/rpc/internal/faultinject"
 	"github.com/IM_System/apps/operations/rpc/internal/svc"
 	"github.com/IM_System/apps/operations/rpc/internal/types"
 	"github.com/IM_System/apps/operations/rpc/operations"
@@ -27,6 +28,9 @@ func (l *GetConnectionObservationsLogic) GetConnectionObservations(in *operation
 	}
 	if in.UserId == "" {
 		return nil, types.InvalidArgument("userId is required")
+	}
+	if response, injected, err := l.injectedConnectionObservation(in.UserId); injected {
+		return response, err
 	}
 	// at 与时间范围互斥
 	if in.At > 0 && (in.StartTime > 0 || in.EndTime > 0) {
@@ -137,6 +141,32 @@ func (l *GetConnectionObservationsLogic) GetConnectionObservations(in *operation
 	}
 
 	return resp, nil
+}
+
+func (l *GetConnectionObservationsLogic) injectedConnectionObservation(userID string) (*operations.GetConnectionObservationsResponse, bool, error) {
+	scenario, ok := l.svcCtx.FaultInjection.ScenarioFor(userID)
+	if !ok {
+		return nil, false, nil
+	}
+	switch scenario {
+	case faultinject.ReceiverOffline:
+		return &operations.GetConnectionObservationsResponse{
+			Observations: []*operations.ConnectionObservation{{
+				State:      "offline",
+				ObservedAt: nowUnixNano(),
+				Reason:     "fault-injection",
+			}},
+			Complete:       true,
+			CoverageStatus: types.CoverageComplete,
+			Note:           "fault-injection-config",
+		}, true, nil
+	case faultinject.QueryTimeout:
+		return nil, true, types.MapQueryError(context.DeadlineExceeded)
+	case faultinject.UnsupportedCapability:
+		return nil, true, types.Unimplemented("fault injection unsupported capability")
+	default:
+		return nil, false, nil
+	}
 }
 
 func joinNote(a, b string) string {

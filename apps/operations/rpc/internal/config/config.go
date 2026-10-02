@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/IM_System/apps/operations/rpc/internal/faultinject"
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
@@ -40,6 +41,9 @@ type Config struct {
 		// DefaultLimit limit<=0 时使用
 		DefaultLimit int32
 	}
+
+	// FaultInjection 仅用于非生产环境的确定性只读故障注入，默认关闭。
+	FaultInjection faultinject.Config
 }
 
 func (c Config) Validate() error {
@@ -54,6 +58,9 @@ func (c Config) Validate() error {
 	}
 	if c.Query.DefaultLimit <= 0 || c.Query.MaxLimit <= 0 || c.Query.DefaultLimit > c.Query.MaxLimit {
 		return fmt.Errorf("operations query limits are invalid")
+	}
+	if err := c.FaultInjection.Validate(c.Mode); err != nil {
+		return err
 	}
 	return nil
 }

@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 
+	"github.com/IM_System/apps/operations/rpc/internal/faultinject"
 	"github.com/IM_System/apps/operations/rpc/internal/svc"
 	"github.com/IM_System/apps/operations/rpc/internal/types"
 	"github.com/IM_System/apps/operations/rpc/operations"
@@ -26,6 +27,9 @@ func (l *GetDeliveryTimelineLogic) GetDeliveryTimeline(in *operations.GetDeliver
 	}
 	if err := types.ValidateMessageID(in.MessageId); err != nil {
 		return nil, err
+	}
+	if response, injected, err := l.injectedDeliveryTimeline(in.MessageId); injected {
+		return response, err
 	}
 	limit, err := types.ValidateLimit(in.Limit, l.svcCtx.DefaultLimit(), l.svcCtx.MaxLimit())
 	if err != nil {
@@ -94,4 +98,47 @@ func (l *GetDeliveryTimelineLogic) GetDeliveryTimeline(in *operations.GetDeliver
 		CoverageStatus: coverage,
 		EventsDropped:  dropped,
 	}, nil
+}
+
+// injectedDeliveryTimeline returns bounded synthetic events for one configured
+// message ID. It does not touch MongoDB or the delivery pipeline.
+func (l *GetDeliveryTimelineLogic) injectedDeliveryTimeline(messageID string) (*operations.GetDeliveryTimelineResponse, bool, error) {
+	scenario, ok := l.svcCtx.FaultInjection.ScenarioFor(messageID)
+	if !ok {
+		return nil, false, nil
+	}
+	switch scenario {
+	case faultinject.DeliveryEmpty:
+		return &operations.GetDeliveryTimelineResponse{
+			Events:         []*operations.DeliveryEvent{},
+			Complete:       true,
+			MessageId:      messageID,
+			CoverageStatus: types.CoverageComplete,
+		}, true, nil
+	case faultinject.DeliveryTimeout:
+		return nil, true, types.MapQueryError(context.DeadlineExceeded)
+	case faultinject.UnsupportedCapability:
+		return nil, true, types.Unimplemented("fault injection unsupported capability")
+	case faultinject.ReceiverOffline, faultinject.AckTimeout:
+		eventType := "receiver_offline"
+		if scenario == faultinject.AckTimeout {
+			eventType = "ack_timeout"
+		}
+		return &operations.GetDeliveryTimelineResponse{
+			Events: []*operations.DeliveryEvent{{
+				EventId:    "fault-" + string(scenario),
+				EventType:  eventType,
+				MessageId:  messageID,
+				OccurredAt: nowUnixNano(),
+				Source:     "fault-injection",
+				ErrorCode:  string(scenario),
+				Evidence:   "fault-injection-config",
+			}},
+			Complete:       true,
+			MessageId:      messageID,
+			CoverageStatus: types.CoverageComplete,
+		}, true, nil
+	default:
+		return nil, false, nil
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/IM_System/apps/im/immodels"
+	"github.com/IM_System/apps/operations/rpc/internal/faultinject"
 	"github.com/IM_System/apps/operations/rpc/internal/svc"
 	"github.com/IM_System/apps/operations/rpc/operations"
 	"github.com/IM_System/apps/operations/rpc/operationsmodels"
@@ -127,6 +128,60 @@ func TestGetMessageRecord_NotFoundIsOK(t *testing.T) {
 	}
 	if resp.Note == "" {
 		t.Fatal("note must explain query-succeeded-no-record")
+	}
+}
+
+func TestFaultInjectionMessageScenariosAreReadOnly(t *testing.T) {
+	id := "665f1c0000000000000000aa"
+	for _, tc := range []struct {
+		name     string
+		scenario faultinject.Scenario
+		wantCode codes.Code
+		wantNote string
+	}{
+		{name: "missing", scenario: faultinject.MessageMissing, wantNote: "query-succeeded-no-record"},
+		{name: "timeout", scenario: faultinject.QueryTimeout, wantCode: codes.DeadlineExceeded},
+		{name: "permission", scenario: faultinject.PermissionDenied, wantCode: codes.PermissionDenied},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			svcCtx := &svc.ServiceContext{FaultInjection: faultinject.Config{
+				Enabled: true,
+				Rules:   map[string]string{id: string(tc.scenario)},
+			}}
+			resp, err := NewGetMessageRecordLogic(context.Background(), svcCtx).GetMessageRecord(&operations.GetMessageRecordRequest{MessageId: id})
+			if code := codeOf(err); code != tc.wantCode {
+				t.Fatalf("code=%v want=%v", code, tc.wantCode)
+			}
+			if tc.wantNote != "" && (resp == nil || resp.Note != tc.wantNote) {
+				actualNote := "<nil>"
+				if resp != nil {
+					actualNote = resp.Note
+				}
+				t.Fatalf("note=%q want=%q", actualNote, tc.wantNote)
+			}
+		})
+	}
+}
+
+func TestFaultInjectionDeliveryAndConnectionScenarios(t *testing.T) {
+	messageID := "665f1c0000000000000000ab"
+	deliverySvc := &svc.ServiceContext{FaultInjection: faultinject.Config{
+		Enabled: true,
+		Rules:   map[string]string{messageID: string(faultinject.AckTimeout)},
+	}}
+	delivery, err := NewGetDeliveryTimelineLogic(context.Background(), deliverySvc).GetDeliveryTimeline(&operations.GetDeliveryTimelineRequest{MessageId: messageID})
+	if err != nil || len(delivery.Events) != 1 || delivery.Events[0].EventType != "ack_timeout" {
+		t.Fatalf("unexpected injected delivery response: %+v %v", delivery, err)
+	}
+
+	userID := "fault-user-offline"
+	connectionSvc := &svc.ServiceContext{FaultInjection: faultinject.Config{
+		Enabled: true,
+		Rules:   map[string]string{userID: string(faultinject.ReceiverOffline)},
+	}}
+	connection, err := NewGetConnectionObservationsLogic(context.Background(), connectionSvc).GetConnectionObservations(&operations.GetConnectionObservationsRequest{UserId: userID})
+	if err != nil || len(connection.Observations) != 1 || connection.Observations[0].State != "offline" {
+		t.Fatalf("unexpected injected connection response: %+v %v", connection, err)
 	}
 }
 

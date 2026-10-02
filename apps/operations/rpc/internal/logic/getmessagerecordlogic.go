@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/IM_System/apps/im/immodels"
+	"github.com/IM_System/apps/operations/rpc/internal/faultinject"
 	"github.com/IM_System/apps/operations/rpc/internal/svc"
 	"github.com/IM_System/apps/operations/rpc/internal/types"
 	"github.com/IM_System/apps/operations/rpc/operations"
@@ -31,6 +32,9 @@ func (l *GetMessageRecordLogic) GetMessageRecord(in *operations.GetMessageRecord
 	}
 
 	observedAt := nowUnixNano()
+	if response, injected, err := l.injectedMessageRecord(in.MessageId, observedAt); injected {
+		return response, err
+	}
 
 	chatLog, err := l.svcCtx.ChatLogModel.FindOne(l.ctx, in.MessageId)
 	if err != nil {
@@ -75,6 +79,44 @@ func (l *GetMessageRecordLogic) GetMessageRecord(in *operations.GetMessageRecord
 		EventsAvailable: eventsAvailable,
 		Note:            note,
 	}, nil
+}
+
+// injectedMessageRecord is a test-only response switch. It runs before Mongo
+// and never writes data; with FaultInjection disabled it is a no-op.
+func (l *GetMessageRecordLogic) injectedMessageRecord(messageID string, observedAt int64) (*operations.GetMessageRecordResponse, bool, error) {
+	scenario, ok := l.svcCtx.FaultInjection.ScenarioFor(messageID)
+	if !ok {
+		return nil, false, nil
+	}
+	switch scenario {
+	case faultinject.MessageMissing:
+		response, err := l.notFound(messageID, observedAt)
+		return response, true, err
+	case faultinject.QueryTimeout:
+		return nil, true, types.MapQueryError(context.DeadlineExceeded)
+	case faultinject.PermissionDenied:
+		return nil, true, types.PermissionDenied("fault injection permission denied")
+	case faultinject.UnsupportedCapability:
+		return nil, true, types.Unimplemented("fault injection unsupported capability")
+	case faultinject.WrongMessageID:
+		return &operations.GetMessageRecordResponse{
+			Found:      true,
+			MessageId:  "000000000000000000000001",
+			CreatedAt:  observedAt,
+			Source:     "fault-injection",
+			ObservedAt: observedAt,
+			Note:       "injected-wrong-message-id",
+		}, true, nil
+	case faultinject.MalformedResponse:
+		return &operations.GetMessageRecordResponse{
+			Found:     true,
+			MessageId: messageID,
+			Source:    "fault-injection",
+			Note:      "injected-malformed-observation",
+		}, true, nil
+	default:
+		return nil, false, nil
+	}
 }
 
 func (l *GetMessageRecordLogic) notFound(messageId string, observedAt int64) (*operations.GetMessageRecordResponse, error) {

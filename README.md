@@ -4,6 +4,11 @@
 
 全栈即时通讯（IM）系统，基于 go-zero 微服务框架构建，采用 gRPC 进行服务间通信。支持单聊、群聊、好友管理、群组管理、消息已读回执等功能。
 
+OperationsQuery 相关文档：
+
+- [只读查询服务契约](docs/operations-query.md)
+- [测试故障注入](docs/fault-injection.md)
+
 ## 架构概览
 
 系统包含 **8 个微服务**，按领域分为 User、Social、IM、Task 四个模块：
