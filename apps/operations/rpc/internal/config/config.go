@@ -1,6 +1,9 @@
 package config
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
@@ -37,4 +40,20 @@ type Config struct {
 		// DefaultLimit limit<=0 时使用
 		DefaultLimit int32
 	}
+}
+
+func (c Config) Validate() error {
+	if strings.TrimSpace(c.Mongo.Url) == "" || strings.TrimSpace(c.Mongo.Db) == "" {
+		return fmt.Errorf("operations query requires Mongo URL and database")
+	}
+	if !c.ServiceAuth.Enable {
+		return fmt.Errorf("operations query service authentication must be enabled")
+	}
+	if strings.TrimSpace(c.ServiceAuth.Token) == "" {
+		return fmt.Errorf("operations query service token is required")
+	}
+	if c.Query.DefaultLimit <= 0 || c.Query.MaxLimit <= 0 || c.Query.DefaultLimit > c.Query.MaxLimit {
+		return fmt.Errorf("operations query limits are invalid")
+	}
+	return nil
 }

@@ -24,7 +24,10 @@ func main() {
 
 	var c config.Config
 	// 本地/测试可直接读文件；生产可切换 configserver（Sail+etcd）与其它服务一致
-	if err := conf.Load(*configFile, &c); err != nil {
+	if err := conf.Load(*configFile, &c, conf.UseEnv()); err != nil {
+		panic(err)
+	}
+	if err := c.Validate(); err != nil {
 		panic(err)
 	}
 

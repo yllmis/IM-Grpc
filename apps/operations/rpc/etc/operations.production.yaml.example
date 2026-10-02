@@ -1,0 +1,32 @@
+Name: operations.rpc
+ListenOn: 0.0.0.0:9100
+Mode: pro
+
+Mongo:
+  Url: "${OPERATIONS_MONGO_URL}"
+  Db: yllmis-im
+
+UserRpc:
+  Etcd:
+    Hosts:
+      - etcd:2379
+    Key: user.rpc
+
+SocialRpc:
+  Etcd:
+    Hosts:
+      - etcd:2379
+    Key: social.rpc
+
+ServiceAuth:
+  Enable: true
+  Token: "${OPERATIONS_SERVICE_TOKEN}"
+  ExtraTokens: []
+
+DeliveryObservation:
+  Enabled: false
+  AckMode: NoAck
+
+Query:
+  MaxLimit: 200
+  DefaultLimit: 50
