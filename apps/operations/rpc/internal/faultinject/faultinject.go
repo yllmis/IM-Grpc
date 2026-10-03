@@ -40,8 +40,8 @@ var allowedScenarios = map[Scenario]struct{}{
 // Config is loaded from the OperationsQuery YAML. Enabled defaults to false;
 // an empty Rules map therefore has zero runtime effect.
 type Config struct {
-	Enabled bool              `json:"enabled" yaml:"Enabled"`
-	Rules   map[string]string `json:"rules" yaml:"Rules"`
+	Enabled bool              `json:",optional"`
+	Rules   map[string]string `json:",optional"`
 }
 
 func (c Config) ScenarioFor(key string) (Scenario, bool) {

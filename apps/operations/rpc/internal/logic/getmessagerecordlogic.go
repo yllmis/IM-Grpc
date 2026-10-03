@@ -90,8 +90,11 @@ func (l *GetMessageRecordLogic) injectedMessageRecord(messageID string, observed
 	}
 	switch scenario {
 	case faultinject.MessageMissing:
-		response, err := l.notFound(messageID, observedAt)
-		return response, true, err
+		// 合成空结果不查询 Mongo；来源明确标记，避免被当作真实存储故障。
+		return &operations.GetMessageRecordResponse{
+			Found: false, MessageId: messageID, ObservedAt: observedAt,
+			Source: "fault-injection", Note: "injected-query-succeeded-no-record",
+		}, true, nil
 	case faultinject.QueryTimeout:
 		return nil, true, types.MapQueryError(context.DeadlineExceeded)
 	case faultinject.PermissionDenied:

@@ -1,6 +1,57 @@
 package config
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/zeromicro/go-zero/core/conf"
+)
+
+func TestFaultInjectionYAMLRemainsOptionalAndLoadsRules(t *testing.T) {
+	const base = `Name: operations.rpc
+ListenOn: 127.0.0.1:9101
+Mode: dev
+Mongo:
+  Url: mongodb://mongo:27017
+  Db: test
+UserRpc:
+  Target: localhost:10000
+SocialRpc:
+  Target: localhost:10001
+ServiceAuth:
+  Enable: true
+  Token: synthetic-test-token
+  ExtraTokens: []
+DeliveryObservation:
+  Enabled: false
+  AckMode: NoAck
+Query:
+  MaxLimit: 200
+  DefaultLimit: 50
+`
+	for _, injected := range []bool{false, true} {
+		yaml := base
+		if injected {
+			yaml += `FaultInjection:
+  Enabled: true
+  Rules:
+    "665f1c0000000000000000ab": query_timeout
+`
+		}
+		var c Config
+		if err := conf.LoadFromYamlBytes([]byte(yaml), &c); err != nil {
+			t.Fatal(err)
+		}
+		if err := c.Validate(); err != nil {
+			t.Fatal(err)
+		}
+		if c.FaultInjection.Enabled != injected {
+			t.Fatalf("enabled=%v want=%v", c.FaultInjection.Enabled, injected)
+		}
+		if injected && c.FaultInjection.Rules["665f1c0000000000000000ab"] != "query_timeout" {
+			t.Fatal("fault rules not loaded from YAML")
+		}
+	}
+}
 
 func TestValidateRequiresAuthenticatedReadOnlyConfiguration(t *testing.T) {
 	valid := Config{}

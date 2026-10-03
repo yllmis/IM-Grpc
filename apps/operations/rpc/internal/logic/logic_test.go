@@ -139,7 +139,7 @@ func TestFaultInjectionMessageScenariosAreReadOnly(t *testing.T) {
 		wantCode codes.Code
 		wantNote string
 	}{
-		{name: "missing", scenario: faultinject.MessageMissing, wantNote: "query-succeeded-no-record"},
+		{name: "missing", scenario: faultinject.MessageMissing, wantNote: "injected-query-succeeded-no-record"},
 		{name: "timeout", scenario: faultinject.QueryTimeout, wantCode: codes.DeadlineExceeded},
 		{name: "permission", scenario: faultinject.PermissionDenied, wantCode: codes.PermissionDenied},
 	} {

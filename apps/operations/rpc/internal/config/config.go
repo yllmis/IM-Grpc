@@ -43,7 +43,7 @@ type Config struct {
 	}
 
 	// FaultInjection 仅用于非生产环境的确定性只读故障注入，默认关闭。
-	FaultInjection faultinject.Config
+	FaultInjection faultinject.Config `json:",optional"`
 }
 
 func (c Config) Validate() error {
