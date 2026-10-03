@@ -199,6 +199,7 @@ package operations;
 option go_package = "./operations";
 
 service OperationsQuery {
+  rpc SearchMessages(SearchMessagesRequest) returns (SearchMessagesResponse);
   rpc FindUserReference(FindUserReferenceRequest) returns (FindUserReferenceResponse);
   rpc GetMessageRecord(GetMessageRecordRequest) returns (GetMessageRecordResponse);
   rpc GetMessageTimeline(GetMessageTimelineRequest) returns (GetMessageTimelineResponse);
@@ -207,6 +208,51 @@ service OperationsQuery {
   rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
 }
 ```
+
+### 4.0 SearchMessages
+
+当客服只有发送方 `senderId` 和时间范围、尚未知道精确 `messageId` 时，用该只读 RPC
+返回有限的消息候选。它只做定位，不代表消息已投递或接收。
+
+```protobuf
+message SearchMessagesRequest {
+  string senderId = 1;       // 必填
+  string receiverId = 2;     // 可选
+  int64 startTime = 3;       // UnixNano，闭区间，最长 7 天
+  int64 endTime = 4;
+  int32 limit = 5;            // 默认 10，最多 20
+}
+
+message MessageReference {
+  string messageId = 1;
+  string conversationId = 2;
+  string senderId = 3;
+  string receiverId = 4;
+  int64 createdAt = 5;        // UnixNano
+}
+
+message SearchMessagesResponse {
+  repeated MessageReference messages = 1;
+  bool truncated = 2;
+  int64 observedAt = 3;       // UnixNano
+}
+```
+
+`messages=[]` 是查询成功但没有候选；`truncated=true` 表示候选不完整，不能自动选择一条。
+超时、数据库不可用、权限错误和未实现必须使用 §3.4 的 gRPC 错误状态，不能伪装成空数组。
+该 RPC 不返回正文、密码、Token 或 Mongo 内部字段。
+
+部署前请由运维显式创建覆盖查询条件和排序的索引（不要在 Agent 请求中自动建索引）：
+
+```javascript
+db.chat_log.createIndex(
+  { sendId: 1, recvId: 1, sendTime: 1, _id: 1 },
+  { name: "ops_sender_time_id" }
+)
+```
+
+如果实例暂时不能建立该索引，服务仍会执行有界查询，但应在上线检查中记录性能风险；
+索引创建不属于 OperationsQuery 的运行时写能力。
 
 以下 `int64` 时间字段均为 **UnixNano**。
 

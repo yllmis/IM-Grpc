@@ -8,6 +8,8 @@ option go_package = "./operations";
 // 时间字段一律 int64 UnixNano（纳秒），禁止与毫秒/秒混用。
 // 只读红线：永久禁止 ExecuteSQL / ExecuteShell / Resend / Modify / Delete / KickUser 等写能力。
 service OperationsQuery {
+  // 有界只读搜索：用于定位诊断对象，不代表投递诊断结论。
+  rpc SearchMessages(SearchMessagesRequest) returns (SearchMessagesResponse);
   // 排障用最小用户引用（禁止返回 password/token/phone/avatar）
   rpc FindUserReference(FindUserReferenceRequest) returns (FindUserReferenceResponse);
 
@@ -25,6 +27,26 @@ service OperationsQuery {
 
   // 诚实的能力声明，取值仅 supported|partial|unsupported
   rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+}
+
+message SearchMessagesRequest {
+  string senderId = 1;
+  string receiverId = 2; // 可选
+  int64 startTime = 3; // 必填 UnixNano，闭区间，最长 7 天
+  int64 endTime = 4;
+  int32 limit = 5; // 默认 10，最多 20
+}
+message MessageReference {
+  string messageId = 1;
+  string conversationId = 2;
+  string senderId = 3;
+  string receiverId = 4;
+  int64 createdAt = 5;
+}
+message SearchMessagesResponse {
+  repeated MessageReference messages = 1;
+  bool truncated = 2; // true 时需缩小范围，不能把当前一条视为唯一匹配
+  int64 observedAt = 3;
 }
 
 // ---------- common ----------
@@ -190,6 +212,7 @@ message GetConnectionObservationsResponse {
 message GetCapabilitiesRequest {}
 
 message GetCapabilitiesResponse {
+  string messageSearch = 11; // 老服务未返回时客户端必须视为不支持
   string messageRecord = 1;
   string messageTimeline = 2;
   string deliveryEvents = 3;

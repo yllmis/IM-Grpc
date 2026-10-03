@@ -17,6 +17,10 @@ func NewOperationsServer(svcCtx *svc.ServiceContext) *OperationsServer {
 	return &OperationsServer{svcCtx: svcCtx}
 }
 
+func (s *OperationsServer) SearchMessages(ctx context.Context, in *operations.SearchMessagesRequest) (*operations.SearchMessagesResponse, error) {
+	return logic.NewSearchMessagesLogic(ctx, s.svcCtx).SearchMessages(in)
+}
+
 func (s *OperationsServer) FindUserReference(ctx context.Context, in *operations.FindUserReferenceRequest) (*operations.FindUserReferenceResponse, error) {
 	return logic.NewFindUserReferenceLogic(ctx, s.svcCtx).FindUserReference(in)
 }

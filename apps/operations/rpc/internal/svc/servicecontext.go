@@ -14,8 +14,9 @@ type ServiceContext struct {
 	Config config.Config
 
 	// 全部只读依赖
-	ChatLogModel immodels.ChatLogModel
-	EventModel   operationsmodels.EventModel
+	ChatLogModel  immodels.ChatLogModel
+	EventModel    operationsmodels.EventModel
+	MessageSearch operationsmodels.MessageSearchModel
 
 	UserRpc   userclient.User
 	SocialRpc socialclient.Social
@@ -29,6 +30,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Config:         c,
 		ChatLogModel:   immodels.MustChatLogModel(c.Mongo.Url, c.Mongo.Db),
 		EventModel:     operationsmodels.MustEventModel(c.Mongo.Url, c.Mongo.Db),
+		MessageSearch:  operationsmodels.MustMessageSearchModel(c.Mongo.Url, c.Mongo.Db),
 		UserRpc:        userclient.NewUser(zrpc.MustNewClient(c.UserRpc)),
 		SocialRpc:      socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc)),
 		FaultInjection: c.FaultInjection,

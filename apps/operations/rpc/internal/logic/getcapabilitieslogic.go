@@ -37,6 +37,10 @@ func (l *GetCapabilitiesLogic) GetCapabilities(_ *operations.GetCapabilitiesRequ
 	writeFailureEvents := "unsupported"
 	readConfirmation := "unsupported"
 	ackHistory := "unsupported"
+	messageSearch := "unsupported"
+	if l.svcCtx.MessageSearch != nil {
+		messageSearch = "supported"
+	}
 
 	if enabled {
 		// 观测开启但可能丢事件 → partial（覆盖可证明完整前不上调 supported）
@@ -55,6 +59,7 @@ func (l *GetCapabilitiesLogic) GetCapabilities(_ *operations.GetCapabilitiesRequ
 
 	return &operations.GetCapabilitiesResponse{
 		MessageRecord:        messageRecord,
+		MessageSearch:        messageSearch,
 		MessageTimeline:      messageTimeline,
 		DeliveryEvents:       deliveryEvents,
 		HistoricalConnection: historicalConnection,
