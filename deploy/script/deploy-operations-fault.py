@@ -25,12 +25,18 @@ def main():
     parser.add_argument("--directory", required=True)
     parser.add_argument("--source", default="yllmis-im-operations-query")
     parser.add_argument("--revision", required=True)
+    parser.add_argument("--bind-address", default="127.0.0.1")
+    parser.add_argument("--host-port", type=int, default=9101)
     args = parser.parse_args()
     container = "yllmis-im-operations-fault-test"
     # 不覆盖正在运行的测试容器；更新时由操作者先保存/停止该测试实例。
     existing = execute("docker", "ps", "-a", "--filter", f"name=^/{container}$", "--format", "{{.Names}}").strip()
     if existing:
         raise RuntimeError("fault test container already exists")
+    if not (1 <= args.host_port <= 65535):
+        raise RuntimeError("host port must be between 1 and 65535")
+    if args.bind_address not in {"127.0.0.1", "0.0.0.0"}:
+        raise RuntimeError("bind address must be 127.0.0.1 or 0.0.0.0")
     original = json.loads(execute("docker", "inspect", args.source))[0]
     if not original["State"]["Running"]:
         raise RuntimeError("source OperationsQuery is not running")
@@ -77,7 +83,7 @@ def main():
         "--memory", "256m", "--cpus", "0.25", "--pids-limit", "128",
         "--label", "im-inspect.purpose=fault-test", "--label", f"im-inspect.revision={args.revision}",
         "--env-file", str(env_path),
-        "-p", "127.0.0.1:9101:9100",
+        "-p", f"{args.bind_address}:{args.host_port}:9100",
         "-v", f"{binary}:/operations/bin/operations-rpc:ro",
         "-v", f"{config_path}:/operations/conf/operations.yaml:ro",
         "--entrypoint", "/operations/bin/operations-rpc",
@@ -85,7 +91,7 @@ def main():
     )
     print("fault_test_deployed=true")
     print("fault_rules=6")
-    print("server_binding=127.0.0.1:9101")
+    print(f"server_binding={args.bind_address}:{args.host_port}")
     print("binary_sha256=" + hashlib.sha256(binary.read_bytes()).hexdigest())
 
 
