@@ -7,6 +7,7 @@ import (
 
 	"github.com/IM_System/apps/operations/rpc/operationsmodels"
 	"github.com/IM_System/pkg/observation"
+	"github.com/IM_System/pkg/readquery"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -44,18 +45,8 @@ func MapQueryError(err error) error {
 		return status.Error(codes.DeadlineExceeded, "query deadline exceeded")
 	}
 
-	msg := err.Error()
-	// mongo 网络/超时
-	if strings.Contains(msg, "connection refused") ||
-		strings.Contains(msg, "server selection error") ||
-		strings.Contains(msg, "topology is closed") {
-		return status.Error(codes.Unavailable, "storage unavailable")
-	}
-	if strings.Contains(msg, "context deadline exceeded") {
-		return status.Error(codes.DeadlineExceeded, "query deadline exceeded")
-	}
-	// 不暴露内部细节
-	return status.Error(codes.Internal, "internal query error")
+	// 保留上游 gRPC 的 PermissionDenied/Unavailable 等语义。
+	return readquery.MapError(err)
 }
 
 // ValidateMessageID 24hex ObjectID。

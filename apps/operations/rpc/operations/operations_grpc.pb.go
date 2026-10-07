@@ -19,6 +19,226 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	ObservationQuery_GetMessageTimeline_FullMethodName        = "/operations.ObservationQuery/GetMessageTimeline"
+	ObservationQuery_GetDeliveryTimeline_FullMethodName       = "/operations.ObservationQuery/GetDeliveryTimeline"
+	ObservationQuery_GetConnectionObservations_FullMethodName = "/operations.ObservationQuery/GetConnectionObservations"
+	ObservationQuery_GetCapabilities_FullMethodName           = "/operations.ObservationQuery/GetCapabilities"
+)
+
+// ObservationQueryClient is the client API for ObservationQuery service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// ObservationQuery：正式内部观测契约，不包含业务对象查询。
+type ObservationQueryClient interface {
+	GetMessageTimeline(ctx context.Context, in *GetMessageTimelineRequest, opts ...grpc.CallOption) (*GetMessageTimelineResponse, error)
+	GetDeliveryTimeline(ctx context.Context, in *GetDeliveryTimelineRequest, opts ...grpc.CallOption) (*GetDeliveryTimelineResponse, error)
+	GetConnectionObservations(ctx context.Context, in *GetConnectionObservationsRequest, opts ...grpc.CallOption) (*GetConnectionObservationsResponse, error)
+	GetCapabilities(ctx context.Context, in *GetCapabilitiesRequest, opts ...grpc.CallOption) (*GetCapabilitiesResponse, error)
+}
+
+type observationQueryClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewObservationQueryClient(cc grpc.ClientConnInterface) ObservationQueryClient {
+	return &observationQueryClient{cc}
+}
+
+func (c *observationQueryClient) GetMessageTimeline(ctx context.Context, in *GetMessageTimelineRequest, opts ...grpc.CallOption) (*GetMessageTimelineResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetMessageTimelineResponse)
+	err := c.cc.Invoke(ctx, ObservationQuery_GetMessageTimeline_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *observationQueryClient) GetDeliveryTimeline(ctx context.Context, in *GetDeliveryTimelineRequest, opts ...grpc.CallOption) (*GetDeliveryTimelineResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDeliveryTimelineResponse)
+	err := c.cc.Invoke(ctx, ObservationQuery_GetDeliveryTimeline_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *observationQueryClient) GetConnectionObservations(ctx context.Context, in *GetConnectionObservationsRequest, opts ...grpc.CallOption) (*GetConnectionObservationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetConnectionObservationsResponse)
+	err := c.cc.Invoke(ctx, ObservationQuery_GetConnectionObservations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *observationQueryClient) GetCapabilities(ctx context.Context, in *GetCapabilitiesRequest, opts ...grpc.CallOption) (*GetCapabilitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCapabilitiesResponse)
+	err := c.cc.Invoke(ctx, ObservationQuery_GetCapabilities_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ObservationQueryServer is the server API for ObservationQuery service.
+// All implementations must embed UnimplementedObservationQueryServer
+// for forward compatibility.
+//
+// ObservationQuery：正式内部观测契约，不包含业务对象查询。
+type ObservationQueryServer interface {
+	GetMessageTimeline(context.Context, *GetMessageTimelineRequest) (*GetMessageTimelineResponse, error)
+	GetDeliveryTimeline(context.Context, *GetDeliveryTimelineRequest) (*GetDeliveryTimelineResponse, error)
+	GetConnectionObservations(context.Context, *GetConnectionObservationsRequest) (*GetConnectionObservationsResponse, error)
+	GetCapabilities(context.Context, *GetCapabilitiesRequest) (*GetCapabilitiesResponse, error)
+	mustEmbedUnimplementedObservationQueryServer()
+}
+
+// UnimplementedObservationQueryServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedObservationQueryServer struct{}
+
+func (UnimplementedObservationQueryServer) GetMessageTimeline(context.Context, *GetMessageTimelineRequest) (*GetMessageTimelineResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMessageTimeline not implemented")
+}
+func (UnimplementedObservationQueryServer) GetDeliveryTimeline(context.Context, *GetDeliveryTimelineRequest) (*GetDeliveryTimelineResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDeliveryTimeline not implemented")
+}
+func (UnimplementedObservationQueryServer) GetConnectionObservations(context.Context, *GetConnectionObservationsRequest) (*GetConnectionObservationsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetConnectionObservations not implemented")
+}
+func (UnimplementedObservationQueryServer) GetCapabilities(context.Context, *GetCapabilitiesRequest) (*GetCapabilitiesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetCapabilities not implemented")
+}
+func (UnimplementedObservationQueryServer) mustEmbedUnimplementedObservationQueryServer() {}
+func (UnimplementedObservationQueryServer) testEmbeddedByValue()                          {}
+
+// UnsafeObservationQueryServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ObservationQueryServer will
+// result in compilation errors.
+type UnsafeObservationQueryServer interface {
+	mustEmbedUnimplementedObservationQueryServer()
+}
+
+func RegisterObservationQueryServer(s grpc.ServiceRegistrar, srv ObservationQueryServer) {
+	// If the following call panics, it indicates UnimplementedObservationQueryServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&ObservationQuery_ServiceDesc, srv)
+}
+
+func _ObservationQuery_GetMessageTimeline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMessageTimelineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ObservationQueryServer).GetMessageTimeline(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ObservationQuery_GetMessageTimeline_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ObservationQueryServer).GetMessageTimeline(ctx, req.(*GetMessageTimelineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ObservationQuery_GetDeliveryTimeline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDeliveryTimelineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ObservationQueryServer).GetDeliveryTimeline(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ObservationQuery_GetDeliveryTimeline_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ObservationQueryServer).GetDeliveryTimeline(ctx, req.(*GetDeliveryTimelineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ObservationQuery_GetConnectionObservations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConnectionObservationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ObservationQueryServer).GetConnectionObservations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ObservationQuery_GetConnectionObservations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ObservationQueryServer).GetConnectionObservations(ctx, req.(*GetConnectionObservationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ObservationQuery_GetCapabilities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCapabilitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ObservationQueryServer).GetCapabilities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ObservationQuery_GetCapabilities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ObservationQueryServer).GetCapabilities(ctx, req.(*GetCapabilitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ObservationQuery_ServiceDesc is the grpc.ServiceDesc for ObservationQuery service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ObservationQuery_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "operations.ObservationQuery",
+	HandlerType: (*ObservationQueryServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetMessageTimeline",
+			Handler:    _ObservationQuery_GetMessageTimeline_Handler,
+		},
+		{
+			MethodName: "GetDeliveryTimeline",
+			Handler:    _ObservationQuery_GetDeliveryTimeline_Handler,
+		},
+		{
+			MethodName: "GetConnectionObservations",
+			Handler:    _ObservationQuery_GetConnectionObservations_Handler,
+		},
+		{
+			MethodName: "GetCapabilities",
+			Handler:    _ObservationQuery_GetCapabilities_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "operations.proto",
+}
+
+const (
 	OperationsQuery_SearchMessages_FullMethodName            = "/operations.OperationsQuery/SearchMessages"
 	OperationsQuery_FindUserReference_FullMethodName         = "/operations.OperationsQuery/FindUserReference"
 	OperationsQuery_GetMessageRecord_FullMethodName          = "/operations.OperationsQuery/GetMessageRecord"
@@ -32,15 +252,15 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// OperationsQuery：IM 通用只读观测查询服务。
+// OperationsQuery：迁移期兼容契约，供尚未切换的客户端使用。
 // 时间字段一律 int64 UnixNano（纳秒），禁止与毫秒/秒混用。
 // 只读红线：永久禁止 ExecuteSQL / ExecuteShell / Resend / Modify / Delete / KickUser 等写能力。
 type OperationsQueryClient interface {
-	// 有界只读搜索：用于定位诊断对象，不代表投递诊断结论。
+	// 迁移兼容入口：转调 im.MessageQuery，后续停用，不再拥有业务查询实现。
 	SearchMessages(ctx context.Context, in *SearchMessagesRequest, opts ...grpc.CallOption) (*SearchMessagesResponse, error)
-	// 排障用最小用户引用（禁止返回 password/token/phone/avatar）
+	// 迁移兼容入口：转调 user.UserQuery；响应仍为最小脱敏投影。
 	FindUserReference(ctx context.Context, in *FindUserReferenceRequest, opts ...grpc.CallOption) (*FindUserReferenceResponse, error)
-	// 单条消息元数据摘要（不含正文）；found=false 表示查询成功但无记录
+	// 迁移兼容入口：转调 im.MessageQuery，再可选补充观测可用性。
 	GetMessageRecord(ctx context.Context, in *GetMessageRecordRequest, opts ...grpc.CallOption) (*GetMessageRecordResponse, error)
 	// 消息生命周期事件流
 	GetMessageTimeline(ctx context.Context, in *GetMessageTimelineRequest, opts ...grpc.CallOption) (*GetMessageTimelineResponse, error)
@@ -134,15 +354,15 @@ func (c *operationsQueryClient) GetCapabilities(ctx context.Context, in *GetCapa
 // All implementations must embed UnimplementedOperationsQueryServer
 // for forward compatibility.
 //
-// OperationsQuery：IM 通用只读观测查询服务。
+// OperationsQuery：迁移期兼容契约，供尚未切换的客户端使用。
 // 时间字段一律 int64 UnixNano（纳秒），禁止与毫秒/秒混用。
 // 只读红线：永久禁止 ExecuteSQL / ExecuteShell / Resend / Modify / Delete / KickUser 等写能力。
 type OperationsQueryServer interface {
-	// 有界只读搜索：用于定位诊断对象，不代表投递诊断结论。
+	// 迁移兼容入口：转调 im.MessageQuery，后续停用，不再拥有业务查询实现。
 	SearchMessages(context.Context, *SearchMessagesRequest) (*SearchMessagesResponse, error)
-	// 排障用最小用户引用（禁止返回 password/token/phone/avatar）
+	// 迁移兼容入口：转调 user.UserQuery；响应仍为最小脱敏投影。
 	FindUserReference(context.Context, *FindUserReferenceRequest) (*FindUserReferenceResponse, error)
-	// 单条消息元数据摘要（不含正文）；found=false 表示查询成功但无记录
+	// 迁移兼容入口：转调 im.MessageQuery，再可选补充观测可用性。
 	GetMessageRecord(context.Context, *GetMessageRecordRequest) (*GetMessageRecordResponse, error)
 	// 消息生命周期事件流
 	GetMessageTimeline(context.Context, *GetMessageTimelineRequest) (*GetMessageTimelineResponse, error)

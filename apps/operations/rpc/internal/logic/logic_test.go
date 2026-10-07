@@ -4,14 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/IM_System/apps/im/immodels"
+	"github.com/IM_System/apps/im/rpc/im"
 	"github.com/IM_System/apps/operations/rpc/internal/faultinject"
 	"github.com/IM_System/apps/operations/rpc/internal/svc"
 	"github.com/IM_System/apps/operations/rpc/operations"
 	"github.com/IM_System/apps/operations/rpc/operationsmodels"
-	"github.com/IM_System/pkg/constants"
 	"github.com/IM_System/pkg/observation"
-	"go.mongodb.org/mongo-driver/v2/bson"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -65,17 +64,20 @@ func (f *fakeEventModel) FindOneByID(_ context.Context, _ string) (*observation.
 	return nil, operationsmodels.ErrNotFound
 }
 
-type fakeChatLogModel struct {
-	immodels.ChatLogModel
-	log *immodels.ChatLog
-	err error
+type fakeMessageQuery struct {
+	im.MessageQueryClient
+	record *im.MessageRecordResponse
+	err    error
 }
 
-func (f *fakeChatLogModel) FindOne(_ context.Context, _ string) (*immodels.ChatLog, error) {
+func (f *fakeMessageQuery) GetMessageRecord(_ context.Context, in *im.MessageRecordRequest, _ ...grpc.CallOption) (*im.MessageRecordResponse, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
-	return f.log, nil
+	if f.record == nil {
+		return &im.MessageRecordResponse{MessageId: in.MessageId, ObservedAt: 42}, nil
+	}
+	return f.record, nil
 }
 
 func codeOf(err error) codes.Code {
@@ -114,8 +116,8 @@ func TestGetMessageRecord_InvalidID(t *testing.T) {
 
 func TestGetMessageRecord_NotFoundIsOK(t *testing.T) {
 	svcCtx := &svc.ServiceContext{
-		ChatLogModel: &fakeChatLogModel{err: immodels.ErrNotFound},
-		EventModel:   &fakeEventModel{},
+		MessageQueryRpc: &fakeMessageQuery{},
+		EventModel:      &fakeEventModel{},
 	}
 	l := NewGetMessageRecordLogic(context.Background(), svcCtx)
 
@@ -187,8 +189,8 @@ func TestFaultInjectionDeliveryAndConnectionScenarios(t *testing.T) {
 
 func TestGetMessageRecord_TimeoutIsErrorNotNotFound(t *testing.T) {
 	svcCtx := &svc.ServiceContext{
-		ChatLogModel: &fakeChatLogModel{err: context.DeadlineExceeded},
-		EventModel:   &fakeEventModel{},
+		MessageQueryRpc: &fakeMessageQuery{err: context.DeadlineExceeded},
+		EventModel:      &fakeEventModel{},
 	}
 	l := NewGetMessageRecordLogic(context.Background(), svcCtx)
 
@@ -207,19 +209,16 @@ func TestGetMessageRecord_TimeoutIsErrorNotNotFound(t *testing.T) {
 func TestGetMessageRecord_Found(t *testing.T) {
 	oid := "665f1c0000000000000000aa"
 	svcCtx := &svc.ServiceContext{
-		ChatLogModel: &fakeChatLogModel{log: &immodels.ChatLog{
+		MessageQueryRpc: &fakeMessageQuery{record: &im.MessageRecordResponse{
+			Found: true, MessageId: oid,
 			ConversationId: "c1",
-			SendId:         "u1",
-			RecvId:         "u2",
-			ChatType:       constants.SingleChatType,
-			SendTime:       42,
-			ReadRecords:    []byte{1},
+			SenderId:       "u1",
+			ReceiverId:     "u2",
+			CreatedAt:      42,
+			ReadState:      "known",
 		}},
 		EventModel: &fakeEventModel{events: []*observation.MessageEvent{{EventID: "e1"}}},
 	}
-	// ChatLog.ID 需要是 ObjectID
-	svcCtx.ChatLogModel.(*fakeChatLogModel).log.ID = mustOID(oid)
-
 	l := NewGetMessageRecordLogic(context.Background(), svcCtx)
 	resp, err := l.GetMessageRecord(&operations.GetMessageRecordRequest{MessageId: oid})
 	if err != nil {
@@ -237,33 +236,10 @@ func TestGetMessageRecord_Found(t *testing.T) {
 	// 脱敏：响应中不得有正文字段（proto 本身无 msgContent）
 }
 
-func TestDeriveReadState(t *testing.T) {
-	st, note := deriveReadState(&immodels.ChatLog{
-		ChatType:    constants.SingleChatType,
-		ReadRecords: []byte{1},
-	})
-	if st != "known" || note == "" {
-		t.Fatalf("single read: %s %s", st, note)
-	}
-
-	st, _ = deriveReadState(&immodels.ChatLog{
-		ChatType:    constants.GroupChatType,
-		ReadRecords: []byte{1, 2},
-	})
-	if st != "approximate" {
-		t.Fatalf("group bitmap must be approximate, got %s", st)
-	}
-
-	st, _ = deriveReadState(&immodels.ChatLog{ChatType: constants.SingleChatType})
-	if st != "unknown" {
-		t.Fatalf("empty records must be unknown, got %s", st)
-	}
-}
-
 // ---- capabilities ----
 
 func TestGetCapabilities_HonestDefaults(t *testing.T) {
-	s := &svc.ServiceContext{}
+	s := &svc.ServiceContext{MessageQueryRpc: &fakeMessageQuery{}}
 	resp, err := NewGetCapabilitiesLogic(context.Background(), s).GetCapabilities(&operations.GetCapabilitiesRequest{})
 	if err != nil {
 		t.Fatal(err)
@@ -355,12 +331,4 @@ func TestEvidenceOf(t *testing.T) {
 	if evidenceOf(observation.EventReceiverOffline) != "offline-marker" {
 		t.Fatal("receiver_offline must be offline-marker")
 	}
-}
-
-func mustOID(hex string) bson.ObjectID {
-	oid, err := bson.ObjectIDFromHex(hex)
-	if err != nil {
-		panic(err)
-	}
-	return oid
 }

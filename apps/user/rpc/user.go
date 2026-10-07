@@ -11,6 +11,7 @@ import (
 	"github.com/IM_System/apps/user/rpc/user"
 	"github.com/IM_System/pkg/configserver"
 	"github.com/IM_System/pkg/interceptor/rpcserver"
+	"github.com/IM_System/pkg/serviceauth"
 
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
@@ -50,7 +51,7 @@ func main() {
 			current.GracefulStop() // 结束旧服务，释放监听端口
 		}
 
-		fmt.Println("更新后的配置", c)
+		fmt.Printf("更新 user-rpc 配置: listen=%s, read-query-enabled=%v\n", c.ListenOn, c.ReadQueryAuth.Enable)
 		wg.Add(1)
 		go func(c config.Config) {
 			defer wg.Done()
@@ -74,6 +75,9 @@ func main() {
 }
 
 func Run(c config.Config) {
+	if err := c.ReadQueryAuth.Validate(); err != nil {
+		panic(err)
+	}
 	ctx := svc.NewServiceContext(c)
 
 	if err := ctx.SetRootToken(); err != nil {
@@ -86,12 +90,13 @@ func Run(c config.Config) {
 		grpcSvrMu.Unlock()
 
 		user.RegisterUserServer(grpcServer, server.NewUserServer(ctx))
+		user.RegisterUserQueryServer(grpcServer, server.NewUserQueryServer(ctx))
 
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
 		}
 	})
-	s.AddUnaryInterceptors(rpcserver.LoginInterceptorfunc)
+	s.AddUnaryInterceptors(serviceauth.Guard(c.ReadQueryAuth, "user.UserQuery"), rpcserver.LoginInterceptorfunc)
 	defer s.Stop()
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

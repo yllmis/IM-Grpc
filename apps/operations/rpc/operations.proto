@@ -4,16 +4,24 @@ package operations;
 
 option go_package = "./operations";
 
-// OperationsQuery：IM 通用只读观测查询服务。
+// ObservationQuery：正式内部观测契约，不包含业务对象查询。
+service ObservationQuery {
+  rpc GetMessageTimeline(GetMessageTimelineRequest) returns (GetMessageTimelineResponse);
+  rpc GetDeliveryTimeline(GetDeliveryTimelineRequest) returns (GetDeliveryTimelineResponse);
+  rpc GetConnectionObservations(GetConnectionObservationsRequest) returns (GetConnectionObservationsResponse);
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+}
+
+// OperationsQuery：迁移期兼容契约，供尚未切换的客户端使用。
 // 时间字段一律 int64 UnixNano（纳秒），禁止与毫秒/秒混用。
 // 只读红线：永久禁止 ExecuteSQL / ExecuteShell / Resend / Modify / Delete / KickUser 等写能力。
 service OperationsQuery {
-  // 有界只读搜索：用于定位诊断对象，不代表投递诊断结论。
+  // 迁移兼容入口：转调 im.MessageQuery，后续停用，不再拥有业务查询实现。
   rpc SearchMessages(SearchMessagesRequest) returns (SearchMessagesResponse);
-  // 排障用最小用户引用（禁止返回 password/token/phone/avatar）
+  // 迁移兼容入口：转调 user.UserQuery；响应仍为最小脱敏投影。
   rpc FindUserReference(FindUserReferenceRequest) returns (FindUserReferenceResponse);
 
-  // 单条消息元数据摘要（不含正文）；found=false 表示查询成功但无记录
+  // 迁移兼容入口：转调 im.MessageQuery，再可选补充观测可用性。
   rpc GetMessageRecord(GetMessageRecordRequest) returns (GetMessageRecordResponse);
 
   // 消息生命周期事件流
@@ -72,6 +80,7 @@ message UserReference {
 
 message FindUserReferenceResponse {
   repeated UserReference users = 1;
+  bool truncated = 2;
 }
 
 // ---------- GetMessageRecord ----------
@@ -96,6 +105,8 @@ message GetMessageRecordResponse {
   string readStateNote = 12;
   bool eventsAvailable = 13;
   string note = 14;
+  // available | absent | unknown；观测失败时不能把 false 当成无事件。
+  string eventsState = 15;
 }
 
 // ---------- MessageEvent / timeline ----------

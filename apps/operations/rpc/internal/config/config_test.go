@@ -15,8 +15,9 @@ Mongo:
   Db: test
 UserRpc:
   Target: localhost:10000
-SocialRpc:
+ImRpc:
   Target: localhost:10001
+DomainQueryToken: synthetic-domain-token
 ServiceAuth:
   Enable: true
   Token: synthetic-test-token
@@ -59,6 +60,9 @@ func TestValidateRequiresAuthenticatedReadOnlyConfiguration(t *testing.T) {
 	valid.Mongo.Db = "yllmis-im"
 	valid.ServiceAuth.Enable = true
 	valid.ServiceAuth.Token = "test-only"
+	valid.DomainQueryToken = "domain-test-only"
+	valid.ImRpc.Target = "localhost:10002"
+	valid.UserRpc.Target = "localhost:10000"
 	valid.Query.DefaultLimit = 50
 	valid.Query.MaxLimit = 200
 	if err := valid.Validate(); err != nil {
@@ -68,6 +72,8 @@ func TestValidateRequiresAuthenticatedReadOnlyConfiguration(t *testing.T) {
 	for _, mutate := range []func(*Config){
 		func(c *Config) { c.ServiceAuth.Enable = false },
 		func(c *Config) { c.ServiceAuth.Token = "" },
+		func(c *Config) { c.DomainQueryToken = "" },
+		func(c *Config) { c.ImRpc.Target = "" },
 		func(c *Config) { c.Mongo.Url = "" },
 		func(c *Config) { c.Query.DefaultLimit = 201 },
 	} {
@@ -76,5 +82,32 @@ func TestValidateRequiresAuthenticatedReadOnlyConfiguration(t *testing.T) {
 		if err := c.Validate(); err == nil {
 			t.Fatal("unsafe OperationsQuery configuration accepted")
 		}
+	}
+}
+
+func TestObservationOnlyConfigurationDoesNotRequireDomainServices(t *testing.T) {
+	var c Config
+	err := conf.LoadFromYamlBytes([]byte(`Name: operations.rpc
+ListenOn: 127.0.0.1:9100
+Mongo:
+  Url: mongodb://mongo:27017
+  Db: test
+ServiceAuth:
+  Enable: true
+  Token: synthetic-token
+  ExtraTokens: []
+Query:
+  MaxLimit: 200
+  DefaultLimit: 50
+DeliveryObservation:
+  Enabled: false
+  AckMode: NoAck
+CompatibilityQueriesDisabled: true
+`), &c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Validate(); err != nil {
+		t.Fatal(err)
 	}
 }

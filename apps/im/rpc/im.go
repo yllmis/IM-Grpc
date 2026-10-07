@@ -11,6 +11,7 @@ import (
 	"github.com/IM_System/apps/im/rpc/internal/svc"
 	"github.com/IM_System/pkg/configserver"
 	"github.com/IM_System/pkg/interceptor/rpcserver"
+	"github.com/IM_System/pkg/serviceauth"
 
 	"github.com/zeromicro/go-zero/core/proc"
 	"github.com/zeromicro/go-zero/core/service"
@@ -43,7 +44,7 @@ func main() {
 
 		proc.Shutdown()
 
-		fmt.Println("更新后的配置", c)
+		fmt.Printf("更新 im-rpc 配置: listen=%s, read-query-enabled=%v\n", c.ListenOn, c.ReadQueryAuth.Enable)
 		wg.Add(1)
 		go func(c config.Config) {
 			defer wg.Done()
@@ -65,16 +66,20 @@ func main() {
 }
 
 func Run(c config.Config) {
+	if err := c.ReadQueryAuth.Validate(); err != nil {
+		panic(err)
+	}
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
 		im.RegisterImServer(grpcServer, server.NewImServer(ctx))
+		im.RegisterMessageQueryServer(grpcServer, server.NewMessageQueryServer(ctx))
 
 		if c.Mode == service.DevMode || c.Mode == service.TestMode {
 			reflection.Register(grpcServer)
 		}
 	})
-	s.AddUnaryInterceptors(rpcserver.LoginInterceptorfunc)
+	s.AddUnaryInterceptors(serviceauth.Guard(c.ReadQueryAuth, "im.MessageQuery"), rpcserver.LoginInterceptorfunc)
 
 	defer s.Stop()
 

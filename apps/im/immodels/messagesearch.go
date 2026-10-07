@@ -1,8 +1,10 @@
-package operationsmodels
+package immodels
 
 import (
 	"context"
 	"fmt"
+
+	"github.com/IM_System/pkg/readquery"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -42,7 +44,10 @@ func messageSearchQuery(f MessageSearchFilter) bson.M {
 	return query
 }
 func (m *messageSearchModel) Search(ctx context.Context, f MessageSearchFilter) ([]MessageReference, error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultQueryTimeout)
+	if f.Limit <= 0 || f.Limit > 20 {
+		return nil, fmt.Errorf("invalid message search limit")
+	}
+	ctx, cancel := context.WithTimeout(ctx, readquery.Timeout)
 	defer cancel()
 	// 多读取一条仅用于判断截断；正文、密码、已读 bitmap 不进入返回结构。
 	cursor, err := m.coll.Find(ctx, messageSearchQuery(f), options.Find().

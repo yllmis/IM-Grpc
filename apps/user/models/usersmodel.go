@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"github.com/zeromicro/go-zero/core/stores/cache"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -12,6 +13,7 @@ type (
 	// and implement the added methods in customUsersModel.
 	UsersModel interface {
 		usersModel
+		SearchReferences(ctx context.Context, filter UserReferenceFilter) ([]UserReferenceRow, error)
 	}
 
 	customUsersModel struct {

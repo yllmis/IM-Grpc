@@ -2,14 +2,13 @@ package logic
 
 import (
 	"context"
-	"errors"
 
-	"github.com/IM_System/apps/im/immodels"
+	"github.com/IM_System/apps/im/rpc/im"
 	"github.com/IM_System/apps/operations/rpc/internal/faultinject"
 	"github.com/IM_System/apps/operations/rpc/internal/svc"
 	"github.com/IM_System/apps/operations/rpc/internal/types"
 	"github.com/IM_System/apps/operations/rpc/operations"
-	"github.com/IM_System/pkg/constants"
+	"github.com/IM_System/pkg/serviceauth"
 )
 
 type GetMessageRecordLogic struct {
@@ -36,15 +35,18 @@ func (l *GetMessageRecordLogic) GetMessageRecord(in *operations.GetMessageRecord
 		return response, err
 	}
 
-	chatLog, err := l.svcCtx.ChatLogModel.FindOne(l.ctx, in.MessageId)
+	if l.svcCtx.MessageQueryRpc == nil {
+		return nil, types.Unimplemented("message domain query unavailable")
+	}
+	row, err := l.svcCtx.MessageQueryRpc.GetMessageRecord(serviceauth.Outgoing(l.ctx, l.svcCtx.Config.DomainQueryToken), &im.MessageRecordRequest{MessageId: in.MessageId})
 	if err != nil {
-		if errors.Is(err, immodels.ErrNotFound) {
-			return l.notFound(in.MessageId, observedAt)
-		}
-		if errors.Is(err, immodels.ErrInvalidObjectId) {
-			return nil, types.InvalidArgument("messageId must be 24hex ObjectID")
-		}
 		return nil, types.MapQueryError(err)
+	}
+	if row == nil {
+		return nil, types.Internal("empty message domain response")
+	}
+	if !row.Found {
+		return l.notFound(in.MessageId, row.ObservedAt)
 	}
 
 	eventsAvailable := false
@@ -52,7 +54,8 @@ func (l *GetMessageRecordLogic) GetMessageRecord(in *operations.GetMessageRecord
 		var evErr error
 		eventsAvailable, evErr = l.svcCtx.EventModel.HasAnyByMessageID(l.ctx, in.MessageId)
 		if evErr != nil {
-			return nil, types.MapQueryError(evErr)
+			// 业务记录已成功查询，观测失败不得将它变成查询失败。
+			return messageRecordResponse(row, false, "event-availability-unknown"), nil
 		}
 	}
 
@@ -61,24 +64,24 @@ func (l *GetMessageRecordLogic) GetMessageRecord(in *operations.GetMessageRecord
 		note = "no-events-yet"
 	}
 
-	readState, readNote := deriveReadState(chatLog)
+	if l.svcCtx.EventModel == nil {
+		note = "event-availability-unknown"
+	}
+	return messageRecordResponse(row, eventsAvailable, note), nil
+}
 
-	return &operations.GetMessageRecordResponse{
-		Found:           true,
-		MessageId:       chatLog.ID.Hex(),
-		ConversationId:  chatLog.ConversationId,
-		SenderId:        chatLog.SendId,
-		ReceiverId:      chatLog.RecvId,
-		CreatedAt:       chatLog.SendTime,
-		Source:          "chat_log",
-		ObservedAt:      observedAt,
-		ChatType:        int32(chatLog.ChatType),
-		MsgType:         int32(chatLog.MsgType),
-		ReadState:       readState,
-		ReadStateNote:   readNote,
-		EventsAvailable: eventsAvailable,
-		Note:            note,
-	}, nil
+func messageRecordResponse(row *im.MessageRecordResponse, available bool, note string) *operations.GetMessageRecordResponse {
+	state := "absent"
+	if available {
+		state = "available"
+	}
+	if note == "event-availability-unknown" {
+		state = "unknown"
+	}
+	return &operations.GetMessageRecordResponse{Found: row.Found, MessageId: row.MessageId, ConversationId: row.ConversationId,
+		SenderId: row.SenderId, ReceiverId: row.ReceiverId, CreatedAt: row.CreatedAt, Source: "chat_log", ObservedAt: row.ObservedAt,
+		ChatType: row.ChatType, MsgType: row.MsgType, ReadState: row.ReadState, ReadStateNote: row.ReadStateNote,
+		EventsAvailable: available, EventsState: state, Note: note}
 }
 
 // injectedMessageRecord is a test-only response switch. It runs before Mongo
@@ -124,45 +127,25 @@ func (l *GetMessageRecordLogic) injectedMessageRecord(messageID string, observed
 
 func (l *GetMessageRecordLogic) notFound(messageId string, observedAt int64) (*operations.GetMessageRecordResponse, error) {
 	resp := &operations.GetMessageRecordResponse{
-		Found:      false,
-		MessageId:  messageId,
-		ObservedAt: observedAt,
-		Source:     "chat_log",
-		Note:       "query-succeeded-no-record",
+		Found:       false,
+		MessageId:   messageId,
+		ObservedAt:  observedAt,
+		Source:      "chat_log",
+		Note:        "query-succeeded-no-record",
+		EventsState: "unknown",
 	}
 	// 仅有事件、ChatLog 未找到 → events-only（异常态）
 	if l.svcCtx.EventModel != nil {
-		if ok, err := l.svcCtx.EventModel.HasAnyByMessageID(l.ctx, messageId); err == nil && ok {
+		if ok, err := l.svcCtx.EventModel.HasAnyByMessageID(l.ctx, messageId); err != nil {
+			resp.Note = joinNote(resp.Note, "event-availability-unknown")
+		} else if ok {
 			resp.EventsAvailable = true
+			resp.EventsState = "available"
 			resp.Source = "events-only"
 			resp.Note = "events-only-chatlog-missing"
+		} else {
+			resp.EventsState = "absent"
 		}
 	}
 	return resp, nil
-}
-
-// deriveReadState 已读摘要。
-// 不返回 bitmap 与用户列表（ADR-008）；群聊 bitmap 哈希碰撞只能是 approximate。
-func deriveReadState(chatLog *immodels.ChatLog) (string, string) {
-	if chatLog == nil {
-		return "unknown", "no-record"
-	}
-
-	switch constants.ChatType(chatLog.ChatType) {
-	case constants.SingleChatType:
-		if len(chatLog.ReadRecords) == 0 {
-			return "unknown", "empty-read-records"
-		}
-		if chatLog.ReadRecords[0] == 0 {
-			return "known", "single-chat-unread"
-		}
-		return "known", "single-chat-read"
-	case constants.GroupChatType:
-		if len(chatLog.ReadRecords) == 0 {
-			return "unknown", "empty-read-records"
-		}
-		return "approximate", "group-bitmap-hash-collision-risk"
-	default:
-		return "unknown", "unsupported-chat-type"
-	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/IM_System/apps/operations/rpc/internal/types"
 	"github.com/IM_System/apps/operations/rpc/operations"
 	"github.com/IM_System/apps/user/rpc/user"
+	"github.com/IM_System/pkg/serviceauth"
 )
 
 type FindUserReferenceLogic struct {
@@ -14,52 +15,47 @@ type FindUserReferenceLogic struct {
 	svcCtx *svc.ServiceContext
 }
 
-func NewFindUserReferenceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *FindUserReferenceLogic {
-	return &FindUserReferenceLogic{ctx: ctx, svcCtx: svcCtx}
+func NewFindUserReferenceLogic(ctx context.Context, s *svc.ServiceContext) *FindUserReferenceLogic {
+	return &FindUserReferenceLogic{ctx: ctx, svcCtx: s}
 }
 
-// FindUserReference 排障用最小用户引用。
-// 禁止返回 password / token / phone / avatar / 完整 UserEntity。
+// Compatibility facade: never fetch or relay a full UserEntity.
 func (l *FindUserReferenceLogic) FindUserReference(in *operations.FindUserReferenceRequest) (*operations.FindUserReferenceResponse, error) {
 	if in == nil {
 		return nil, types.InvalidArgument("request is required")
 	}
-	if in.UserId == "" && in.Nickname == "" && in.Phone == "" {
-		return nil, types.InvalidArgument("one of userId/nickname/phone is required")
+	if l.svcCtx.UserQueryRpc == nil {
+		return nil, types.Unimplemented("user domain query unavailable")
 	}
-
-	limit, err := types.ValidateLimit(in.Limit, l.svcCtx.DefaultLimit(), l.svcCtx.MaxLimit())
+	// Preserve the old selector precedence during migration. The new domain
+	// contract deliberately requires exactly one selector.
+	req := &user.UserReferenceRequest{Limit: in.Limit}
+	switch {
+	case in.Phone != "":
+		req.Phone = in.Phone
+	case in.Nickname != "":
+		req.Nickname = in.Nickname
+	default:
+		req.UserId = in.UserId
+	}
+	limit, err := types.ValidateLimit(req.Limit, l.svcCtx.DefaultLimit(), l.svcCtx.MaxLimit())
 	if err != nil {
 		return nil, err
 	}
-
-	req := &user.FindUserReq{
-		Name:  in.Nickname,
-		Phone: in.Phone,
-	}
-	if in.UserId != "" {
-		req.Ids = []string{in.UserId}
-	}
-
-	resp, err := l.svcCtx.UserRpc.FindUser(l.ctx, req)
+	req.Limit = limit
+	resp, err := l.svcCtx.UserQueryRpc.FindUserReference(serviceauth.Outgoing(l.ctx, l.svcCtx.Config.DomainQueryToken), req)
 	if err != nil {
 		return nil, types.MapQueryError(err)
 	}
-
-	observedAt := nowUnixNano()
-	users := make([]*operations.UserReference, 0, len(resp.Users))
-	for _, u := range resp.Users {
-		if int32(len(users)) >= limit {
-			break
-		}
-		// 只保留最小字段，禁止透传 UserEntity 敏感项
-		users = append(users, &operations.UserReference{
-			UserId:      u.Id,
-			DisplayName: u.Nickname,
-			Status:      u.Status,
-			ObservedAt:  observedAt,
-		})
+	if resp == nil {
+		return nil, types.Internal("empty user domain response")
 	}
-
-	return &operations.FindUserReferenceResponse{Users: users}, nil
+	result := &operations.FindUserReferenceResponse{Users: make([]*operations.UserReference, 0, len(resp.Users)), Truncated: resp.Truncated}
+	for _, row := range resp.Users {
+		if row == nil {
+			return nil, types.Internal("invalid user domain response")
+		}
+		result.Users = append(result.Users, &operations.UserReference{UserId: row.UserId, DisplayName: row.DisplayName, Status: row.Status, ObservedAt: row.ObservedAt})
+	}
+	return result, nil
 }

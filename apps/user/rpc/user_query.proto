@@ -1,0 +1,25 @@
+syntax = "proto3";
+package user;
+option go_package = "github.com/IM_System/apps/user/rpc/user";
+
+// 用户领域最小只读投影。仅授权内部服务，不暴露手机号等敏感字段。
+service UserQuery {
+  rpc FindUserReference(UserReferenceRequest) returns (UserReferenceResponse);
+}
+message UserReferenceRequest {
+  // 三种条件必须且只能选一种，避免隐式优先级。
+  string userId = 1;
+  string nickname = 2;
+  string phone = 3;
+  int32 limit = 4; // 默认 50，最多 200
+}
+message UserQueryReference {
+  string userId = 1;
+  string displayName = 2;
+  int32 status = 3;
+  int64 observedAt = 4; // UnixNano
+}
+message UserReferenceResponse {
+  repeated UserQueryReference users = 1;
+  bool truncated = 2;
+}

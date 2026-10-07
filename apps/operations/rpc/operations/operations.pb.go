@@ -372,6 +372,7 @@ func (x *UserReference) GetObservedAt() int64 {
 type FindUserReferenceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Users         []*UserReference       `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	Truncated     bool                   `protobuf:"varint,2,opt,name=truncated,proto3" json:"truncated,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -411,6 +412,13 @@ func (x *FindUserReferenceResponse) GetUsers() []*UserReference {
 		return x.Users
 	}
 	return nil
+}
+
+func (x *FindUserReferenceResponse) GetTruncated() bool {
+	if x != nil {
+		return x.Truncated
+	}
+	return false
 }
 
 type GetMessageRecordRequest struct {
@@ -474,8 +482,10 @@ type GetMessageRecordResponse struct {
 	ReadStateNote   string `protobuf:"bytes,12,opt,name=readStateNote,proto3" json:"readStateNote,omitempty"`
 	EventsAvailable bool   `protobuf:"varint,13,opt,name=eventsAvailable,proto3" json:"eventsAvailable,omitempty"`
 	Note            string `protobuf:"bytes,14,opt,name=note,proto3" json:"note,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// available | absent | unknown；观测失败时不能把 false 当成无事件。
+	EventsState   string `protobuf:"bytes,15,opt,name=eventsState,proto3" json:"eventsState,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetMessageRecordResponse) Reset() {
@@ -602,6 +612,13 @@ func (x *GetMessageRecordResponse) GetEventsAvailable() bool {
 func (x *GetMessageRecordResponse) GetNote() string {
 	if x != nil {
 		return x.Note
+	}
+	return ""
+}
+
+func (x *GetMessageRecordResponse) GetEventsState() string {
+	if x != nil {
+		return x.EventsState
 	}
 	return ""
 }
@@ -1749,11 +1766,12 @@ const file_operations_proto_rawDesc = "" +
 	"\x06status\x18\x03 \x01(\x05R\x06status\x12\x1e\n" +
 	"\n" +
 	"observedAt\x18\x04 \x01(\x03R\n" +
-	"observedAt\"L\n" +
+	"observedAt\"j\n" +
 	"\x19FindUserReferenceResponse\x12/\n" +
-	"\x05users\x18\x01 \x03(\v2\x19.operations.UserReferenceR\x05users\"7\n" +
+	"\x05users\x18\x01 \x03(\v2\x19.operations.UserReferenceR\x05users\x12\x1c\n" +
+	"\ttruncated\x18\x02 \x01(\bR\ttruncated\"7\n" +
 	"\x17GetMessageRecordRequest\x12\x1c\n" +
-	"\tmessageId\x18\x01 \x01(\tR\tmessageId\"\xc0\x03\n" +
+	"\tmessageId\x18\x01 \x01(\tR\tmessageId\"\xe2\x03\n" +
 	"\x18GetMessageRecordResponse\x12\x14\n" +
 	"\x05found\x18\x01 \x01(\bR\x05found\x12\x1c\n" +
 	"\tmessageId\x18\x02 \x01(\tR\tmessageId\x12&\n" +
@@ -1773,7 +1791,8 @@ const file_operations_proto_rawDesc = "" +
 	"\treadState\x18\v \x01(\tR\treadState\x12$\n" +
 	"\rreadStateNote\x18\f \x01(\tR\rreadStateNote\x12(\n" +
 	"\x0feventsAvailable\x18\r \x01(\bR\x0feventsAvailable\x12\x12\n" +
-	"\x04note\x18\x0e \x01(\tR\x04note\"\xcd\x04\n" +
+	"\x04note\x18\x0e \x01(\tR\x04note\x12 \n" +
+	"\veventsState\x18\x0f \x01(\tR\veventsState\"\xcd\x04\n" +
 	"\fMessageEvent\x12\x18\n" +
 	"\aeventId\x18\x01 \x01(\tR\aeventId\x12\"\n" +
 	"\feventVersion\x18\x02 \x01(\x05R\feventVersion\x12\x1c\n" +
@@ -1906,7 +1925,12 @@ const file_operations_proto_rawDesc = "" +
 	"observedAt\x12.\n" +
 	"\x12observationEnabled\x18\t \x01(\tR\x12observationEnabled\x12\x18\n" +
 	"\aackMode\x18\n" +
-	" \x01(\tR\aackMode2\xce\x05\n" +
+	" \x01(\tR\aackMode2\xb5\x03\n" +
+	"\x10ObservationQuery\x12c\n" +
+	"\x12GetMessageTimeline\x12%.operations.GetMessageTimelineRequest\x1a&.operations.GetMessageTimelineResponse\x12f\n" +
+	"\x13GetDeliveryTimeline\x12&.operations.GetDeliveryTimelineRequest\x1a'.operations.GetDeliveryTimelineResponse\x12x\n" +
+	"\x19GetConnectionObservations\x12,.operations.GetConnectionObservationsRequest\x1a-.operations.GetConnectionObservationsResponse\x12Z\n" +
+	"\x0fGetCapabilities\x12\".operations.GetCapabilitiesRequest\x1a#.operations.GetCapabilitiesResponse2\xce\x05\n" +
 	"\x0fOperationsQuery\x12W\n" +
 	"\x0eSearchMessages\x12!.operations.SearchMessagesRequest\x1a\".operations.SearchMessagesResponse\x12`\n" +
 	"\x11FindUserReference\x12$.operations.FindUserReferenceRequest\x1a%.operations.FindUserReferenceResponse\x12]\n" +
@@ -1962,22 +1986,30 @@ var file_operations_proto_depIdxs = []int32{
 	12, // 5: operations.GetDeliveryTimelineResponse.events:type_name -> operations.DeliveryEvent
 	15, // 6: operations.GetConnectionObservationsResponse.observations:type_name -> operations.ConnectionObservation
 	16, // 7: operations.GetConnectionObservationsResponse.current:type_name -> operations.CurrentConnection
-	0,  // 8: operations.OperationsQuery.SearchMessages:input_type -> operations.SearchMessagesRequest
-	3,  // 9: operations.OperationsQuery.FindUserReference:input_type -> operations.FindUserReferenceRequest
-	6,  // 10: operations.OperationsQuery.GetMessageRecord:input_type -> operations.GetMessageRecordRequest
-	9,  // 11: operations.OperationsQuery.GetMessageTimeline:input_type -> operations.GetMessageTimelineRequest
-	11, // 12: operations.OperationsQuery.GetDeliveryTimeline:input_type -> operations.GetDeliveryTimelineRequest
-	14, // 13: operations.OperationsQuery.GetConnectionObservations:input_type -> operations.GetConnectionObservationsRequest
-	18, // 14: operations.OperationsQuery.GetCapabilities:input_type -> operations.GetCapabilitiesRequest
-	2,  // 15: operations.OperationsQuery.SearchMessages:output_type -> operations.SearchMessagesResponse
-	5,  // 16: operations.OperationsQuery.FindUserReference:output_type -> operations.FindUserReferenceResponse
-	7,  // 17: operations.OperationsQuery.GetMessageRecord:output_type -> operations.GetMessageRecordResponse
-	10, // 18: operations.OperationsQuery.GetMessageTimeline:output_type -> operations.GetMessageTimelineResponse
-	13, // 19: operations.OperationsQuery.GetDeliveryTimeline:output_type -> operations.GetDeliveryTimelineResponse
-	17, // 20: operations.OperationsQuery.GetConnectionObservations:output_type -> operations.GetConnectionObservationsResponse
-	19, // 21: operations.OperationsQuery.GetCapabilities:output_type -> operations.GetCapabilitiesResponse
-	15, // [15:22] is the sub-list for method output_type
-	8,  // [8:15] is the sub-list for method input_type
+	9,  // 8: operations.ObservationQuery.GetMessageTimeline:input_type -> operations.GetMessageTimelineRequest
+	11, // 9: operations.ObservationQuery.GetDeliveryTimeline:input_type -> operations.GetDeliveryTimelineRequest
+	14, // 10: operations.ObservationQuery.GetConnectionObservations:input_type -> operations.GetConnectionObservationsRequest
+	18, // 11: operations.ObservationQuery.GetCapabilities:input_type -> operations.GetCapabilitiesRequest
+	0,  // 12: operations.OperationsQuery.SearchMessages:input_type -> operations.SearchMessagesRequest
+	3,  // 13: operations.OperationsQuery.FindUserReference:input_type -> operations.FindUserReferenceRequest
+	6,  // 14: operations.OperationsQuery.GetMessageRecord:input_type -> operations.GetMessageRecordRequest
+	9,  // 15: operations.OperationsQuery.GetMessageTimeline:input_type -> operations.GetMessageTimelineRequest
+	11, // 16: operations.OperationsQuery.GetDeliveryTimeline:input_type -> operations.GetDeliveryTimelineRequest
+	14, // 17: operations.OperationsQuery.GetConnectionObservations:input_type -> operations.GetConnectionObservationsRequest
+	18, // 18: operations.OperationsQuery.GetCapabilities:input_type -> operations.GetCapabilitiesRequest
+	10, // 19: operations.ObservationQuery.GetMessageTimeline:output_type -> operations.GetMessageTimelineResponse
+	13, // 20: operations.ObservationQuery.GetDeliveryTimeline:output_type -> operations.GetDeliveryTimelineResponse
+	17, // 21: operations.ObservationQuery.GetConnectionObservations:output_type -> operations.GetConnectionObservationsResponse
+	19, // 22: operations.ObservationQuery.GetCapabilities:output_type -> operations.GetCapabilitiesResponse
+	2,  // 23: operations.OperationsQuery.SearchMessages:output_type -> operations.SearchMessagesResponse
+	5,  // 24: operations.OperationsQuery.FindUserReference:output_type -> operations.FindUserReferenceResponse
+	7,  // 25: operations.OperationsQuery.GetMessageRecord:output_type -> operations.GetMessageRecordResponse
+	10, // 26: operations.OperationsQuery.GetMessageTimeline:output_type -> operations.GetMessageTimelineResponse
+	13, // 27: operations.OperationsQuery.GetDeliveryTimeline:output_type -> operations.GetDeliveryTimelineResponse
+	17, // 28: operations.OperationsQuery.GetConnectionObservations:output_type -> operations.GetConnectionObservationsResponse
+	19, // 29: operations.OperationsQuery.GetCapabilities:output_type -> operations.GetCapabilitiesResponse
+	19, // [19:30] is the sub-list for method output_type
+	8,  // [8:19] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name
@@ -1996,7 +2028,7 @@ func file_operations_proto_init() {
 			NumEnums:      0,
 			NumMessages:   22,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_operations_proto_goTypes,
 		DependencyIndexes: file_operations_proto_depIdxs,

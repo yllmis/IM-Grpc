@@ -41,6 +41,7 @@ func Run(c config.Config) {
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
 		operations.RegisterOperationsQueryServer(grpcServer, server.NewOperationsServer(ctx))
+		operations.RegisterObservationQueryServer(grpcServer, server.NewObservationServer(ctx))
 		reflection.Register(grpcServer)
 	})
 	// 服务身份在 interceptor 校验；错误码映射沿用 LoginInterceptorfunc

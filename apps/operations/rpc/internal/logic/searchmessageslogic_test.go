@@ -2,68 +2,52 @@ package logic
 
 import (
 	"context"
-	"testing"
-
+	"github.com/IM_System/apps/im/rpc/im"
 	"github.com/IM_System/apps/operations/rpc/internal/svc"
 	"github.com/IM_System/apps/operations/rpc/operations"
-	"github.com/IM_System/apps/operations/rpc/operationsmodels"
-	"go.mongodb.org/mongo-driver/v2/bson"
+	"github.com/IM_System/pkg/serviceauth"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"testing"
 )
 
-type fakeMessageSearchModel struct {
-	rows []operationsmodels.MessageReference
-	err  error
+type fakeSearchQuery struct {
+	im.MessageQueryClient
+	response *im.MessageSearchResponse
+	err      error
+	request  *im.MessageSearchRequest
+	token    string
 }
 
-func (f *fakeMessageSearchModel) Search(_ context.Context, _ operationsmodels.MessageSearchFilter) ([]operationsmodels.MessageReference, error) {
-	return f.rows, f.err
+func (f *fakeSearchQuery) SearchMessages(ctx context.Context, in *im.MessageSearchRequest, _ ...grpc.CallOption) (*im.MessageSearchResponse, error) {
+	f.request = in
+	md, _ := metadata.FromOutgoingContext(ctx)
+	f.token = md.Get(serviceauth.MetadataServiceToken)[0]
+	return f.response, f.err
 }
-
-func TestSearchMessages_ReturnsBoundedCandidates(t *testing.T) {
-	model := &fakeMessageSearchModel{rows: []operationsmodels.MessageReference{
-		{ID: bson.NewObjectID(), SenderID: "sender-1", ReceiverID: "receiver-1", CreatedAt: 10},
-		{ID: bson.NewObjectID(), SenderID: "sender-1", ReceiverID: "receiver-2", CreatedAt: 20},
+func TestSearchMessages_ForwardsDomainFactsAndDedicatedCredential(t *testing.T) {
+	client := &fakeSearchQuery{response: &im.MessageSearchResponse{
+		Messages: []*im.MessageQueryReference{{MessageId: "665f1c0000000000000000aa", SenderId: "u1"}}, Truncated: true, ObservedAt: 42,
 	}}
-	logic := NewSearchMessagesLogic(context.Background(), &svc.ServiceContext{MessageSearch: model})
-	got, err := logic.SearchMessages(&operations.SearchMessagesRequest{
-		SenderId: "sender-1", StartTime: 1, EndTime: 100, Limit: 1,
-	})
-	if err != nil {
-		t.Fatalf("SearchMessages() error = %v", err)
+	s := &svc.ServiceContext{MessageQueryRpc: client}
+	s.Config.DomainQueryToken = "domain-only-token"
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs(serviceauth.MetadataServiceToken, "caller-token"))
+	got, err := NewSearchMessagesLogic(ctx, s).SearchMessages(&operations.SearchMessagesRequest{SenderId: "u1", StartTime: 1, EndTime: 100, Limit: 1})
+	if err != nil || len(got.Messages) != 1 || !got.Truncated || got.ObservedAt != 42 {
+		t.Fatalf("%+v %v", got, err)
 	}
-	if len(got.Messages) != 1 || !got.Truncated {
-		t.Fatalf("expected one truncated candidate, got %+v", got)
-	}
-	if got.Messages[0].SenderId != "sender-1" {
-		t.Fatalf("sender mismatch: %+v", got.Messages[0])
+	if client.request.SenderId != "u1" || client.request.Limit != 1 || client.token != "domain-only-token" {
+		t.Fatalf("forwarding: %+v token=%q", client.request, client.token)
 	}
 }
-
-func TestSearchMessages_RejectsUnboundedOrInvalidRange(t *testing.T) {
-	logic := NewSearchMessagesLogic(context.Background(), &svc.ServiceContext{
-		MessageSearch: &fakeMessageSearchModel{},
-	})
-	cases := []*operations.SearchMessagesRequest{
-		{SenderId: "sender-1", EndTime: 100},
-		{SenderId: "sender-1", StartTime: 100, EndTime: 1},
-	}
-	for _, input := range cases {
-		if _, err := logic.SearchMessages(input); status.Code(err) != codes.InvalidArgument {
-			t.Fatalf("input %+v code = %v, want InvalidArgument", input, status.Code(err))
+func TestSearchMessages_PreservesDomainErrors(t *testing.T) {
+	for _, code := range []codes.Code{codes.InvalidArgument, codes.PermissionDenied, codes.Unavailable, codes.DeadlineExceeded, codes.Unimplemented} {
+		client := &fakeSearchQuery{err: status.Error(code, "domain query failed")}
+		resp, err := NewSearchMessagesLogic(context.Background(), &svc.ServiceContext{MessageQueryRpc: client}).SearchMessages(&operations.SearchMessagesRequest{SenderId: "u1"})
+		if status.Code(err) != code || resp != nil {
+			t.Fatalf("code=%v resp=%v err=%v", code, resp, err)
 		}
-	}
-}
-
-func TestSearchMessages_DoesNotTurnStorageFailureIntoEmptyResult(t *testing.T) {
-	logic := NewSearchMessagesLogic(context.Background(), &svc.ServiceContext{
-		MessageSearch: &fakeMessageSearchModel{err: context.DeadlineExceeded},
-	})
-	_, err := logic.SearchMessages(&operations.SearchMessagesRequest{
-		SenderId: "sender-1", StartTime: 1, EndTime: 100,
-	})
-	if status.Code(err) != codes.DeadlineExceeded {
-		t.Fatalf("code = %v, want DeadlineExceeded", status.Code(err))
 	}
 }

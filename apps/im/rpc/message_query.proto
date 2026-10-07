@@ -1,0 +1,45 @@
+syntax = "proto3";
+package im;
+option go_package = "github.com/IM_System/apps/im/rpc/im";
+
+// 消息领域只读查询。与 Im 的聊天业务契约分离，复用同一 RPC 进程。
+// 当前仅供受信任内部服务使用，不是普通用户或公开 SDK 接口。
+service MessageQuery {
+  rpc GetMessageRecord(MessageRecordRequest) returns (MessageRecordResponse);
+  rpc SearchMessages(MessageSearchRequest) returns (MessageSearchResponse);
+}
+message MessageRecordRequest { string messageId = 1; }
+message MessageRecordResponse {
+  // 查询成功但不存在为 false；查询失败必须返回 gRPC error。
+  bool found = 1;
+  string messageId = 2;
+  string conversationId = 3;
+  string senderId = 4;
+  string receiverId = 5;
+  int64 createdAt = 6; // UnixNano
+  int32 chatType = 7;
+  int32 msgType = 8;
+  string readState = 9; // known | unknown | approximate
+  string readStateNote = 10;
+  int64 observedAt = 11; // UnixNano
+  // 不包含正文、已读 bitmap、观测事件状态。
+}
+message MessageSearchRequest {
+  string senderId = 1;
+  string receiverId = 2;
+  int64 startTime = 3; // 必填 UnixNano，最长 7 天
+  int64 endTime = 4;
+  int32 limit = 5; // 默认 10，最多 20
+}
+message MessageQueryReference {
+  string messageId = 1;
+  string conversationId = 2;
+  string senderId = 3;
+  string receiverId = 4;
+  int64 createdAt = 5;
+}
+message MessageSearchResponse {
+  repeated MessageQueryReference messages = 1;
+  bool truncated = 2;
+  int64 observedAt = 3;
+}

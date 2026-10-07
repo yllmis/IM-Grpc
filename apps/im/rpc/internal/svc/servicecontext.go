@@ -11,6 +11,7 @@ type ServiceContext struct {
 	immodels.ChatLogModel
 	immodels.ConversationModel
 	immodels.ConversationsModel
+	MessageSearch immodels.MessageSearchModel
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -20,5 +21,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		ChatLogModel:       immodels.MustChatLogModel(c.Mongo.Url, c.Mongo.Db),
 		ConversationModel:  immodels.MustConversationModel(c.Mongo.Url, c.Mongo.Db),
 		ConversationsModel: immodels.MustConversationsModel(c.Mongo.Url, c.Mongo.Db),
+		MessageSearch:      immodels.MustMessageSearchModel(c.Mongo.Url, c.Mongo.Db),
 	}
 }

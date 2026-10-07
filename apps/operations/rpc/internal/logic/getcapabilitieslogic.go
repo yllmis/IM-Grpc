@@ -28,7 +28,10 @@ func (l *GetCapabilitiesLogic) GetCapabilities(_ *operations.GetCapabilitiesRequ
 	}
 
 	// message_record：不依赖观测开关
-	messageRecord := "supported"
+	messageRecord := "unsupported"
+	if l.svcCtx.MessageQueryRpc != nil {
+		messageRecord = "supported"
+	}
 
 	// 其余能力依赖观测事件；关闭时一律 unsupported
 	messageTimeline := "unsupported"
@@ -38,7 +41,7 @@ func (l *GetCapabilitiesLogic) GetCapabilities(_ *operations.GetCapabilitiesRequ
 	readConfirmation := "unsupported"
 	ackHistory := "unsupported"
 	messageSearch := "unsupported"
-	if l.svcCtx.MessageSearch != nil {
+	if l.svcCtx.MessageQueryRpc != nil {
 		messageSearch = "supported"
 	}
 

@@ -1,12 +1,11 @@
 package svc
 
 import (
-	"github.com/IM_System/apps/im/immodels"
+	"github.com/IM_System/apps/im/rpc/im"
 	"github.com/IM_System/apps/operations/rpc/internal/config"
 	"github.com/IM_System/apps/operations/rpc/internal/faultinject"
 	"github.com/IM_System/apps/operations/rpc/operationsmodels"
-	"github.com/IM_System/apps/social/rpc/socialclient"
-	"github.com/IM_System/apps/user/rpc/userclient"
+	"github.com/IM_System/apps/user/rpc/user"
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
@@ -14,27 +13,26 @@ type ServiceContext struct {
 	Config config.Config
 
 	// 全部只读依赖
-	ChatLogModel  immodels.ChatLogModel
-	EventModel    operationsmodels.EventModel
-	MessageSearch operationsmodels.MessageSearchModel
-
-	UserRpc   userclient.User
-	SocialRpc socialclient.Social
+	EventModel operationsmodels.EventModel
+	// Transitional forwarding clients. No direct access to business tables.
+	MessageQueryRpc im.MessageQueryClient
+	UserQueryRpc    user.UserQueryClient
 
 	// FaultInjection 只改变匹配测试 ID 的查询响应，不触碰 IM 主链路。
 	FaultInjection faultinject.Config
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
-	return &ServiceContext{
+	s := &ServiceContext{
 		Config:         c,
-		ChatLogModel:   immodels.MustChatLogModel(c.Mongo.Url, c.Mongo.Db),
 		EventModel:     operationsmodels.MustEventModel(c.Mongo.Url, c.Mongo.Db),
-		MessageSearch:  operationsmodels.MustMessageSearchModel(c.Mongo.Url, c.Mongo.Db),
-		UserRpc:        userclient.NewUser(zrpc.MustNewClient(c.UserRpc)),
-		SocialRpc:      socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc)),
 		FaultInjection: c.FaultInjection,
 	}
+	if !c.CompatibilityQueriesDisabled {
+		s.MessageQueryRpc = im.NewMessageQueryClient(zrpc.MustNewClient(c.ImRpc).Conn())
+		s.UserQueryRpc = user.NewUserQueryClient(zrpc.MustNewClient(c.UserRpc).Conn())
+	}
+	return s
 }
 
 // MaxLimit 返回查询上限。
