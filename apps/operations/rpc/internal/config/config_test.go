@@ -13,11 +13,6 @@ Mode: dev
 Mongo:
   Url: mongodb://mongo:27017
   Db: test
-UserRpc:
-  Target: localhost:10000
-ImRpc:
-  Target: localhost:10001
-DomainQueryToken: synthetic-domain-token
 ServiceAuth:
   Enable: true
   Token: synthetic-test-token
@@ -35,7 +30,7 @@ Query:
 			yaml += `FaultInjection:
   Enabled: true
   Rules:
-    "665f1c0000000000000000ab": query_timeout
+    "665f1c0000000000000000ab": delivery_timeout
 `
 		}
 		var c Config
@@ -48,7 +43,7 @@ Query:
 		if c.FaultInjection.Enabled != injected {
 			t.Fatalf("enabled=%v want=%v", c.FaultInjection.Enabled, injected)
 		}
-		if injected && c.FaultInjection.Rules["665f1c0000000000000000ab"] != "query_timeout" {
+		if injected && c.FaultInjection.Rules["665f1c0000000000000000ab"] != "delivery_timeout" {
 			t.Fatal("fault rules not loaded from YAML")
 		}
 	}
@@ -60,9 +55,6 @@ func TestValidateRequiresAuthenticatedReadOnlyConfiguration(t *testing.T) {
 	valid.Mongo.Db = "yllmis-im"
 	valid.ServiceAuth.Enable = true
 	valid.ServiceAuth.Token = "test-only"
-	valid.DomainQueryToken = "domain-test-only"
-	valid.ImRpc.Target = "localhost:10002"
-	valid.UserRpc.Target = "localhost:10000"
 	valid.Query.DefaultLimit = 50
 	valid.Query.MaxLimit = 200
 	if err := valid.Validate(); err != nil {
@@ -72,15 +64,13 @@ func TestValidateRequiresAuthenticatedReadOnlyConfiguration(t *testing.T) {
 	for _, mutate := range []func(*Config){
 		func(c *Config) { c.ServiceAuth.Enable = false },
 		func(c *Config) { c.ServiceAuth.Token = "" },
-		func(c *Config) { c.DomainQueryToken = "" },
-		func(c *Config) { c.ImRpc.Target = "" },
 		func(c *Config) { c.Mongo.Url = "" },
 		func(c *Config) { c.Query.DefaultLimit = 201 },
 	} {
 		c := valid
 		mutate(&c)
 		if err := c.Validate(); err == nil {
-			t.Fatal("unsafe OperationsQuery configuration accepted")
+			t.Fatal("unsafe ObservationQuery configuration accepted")
 		}
 	}
 }
@@ -102,7 +92,6 @@ Query:
 DeliveryObservation:
   Enabled: false
   AckMode: NoAck
-CompatibilityQueriesDisabled: true
 `), &c)
 	if err != nil {
 		t.Fatal(err)

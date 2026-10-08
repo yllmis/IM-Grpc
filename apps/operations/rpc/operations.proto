@@ -5,6 +5,7 @@ package operations;
 option go_package = "./operations";
 
 // ObservationQuery：正式内部观测契约，不包含业务对象查询。
+// 只读边界：禁止 ExecuteSQL / ExecuteShell / Resend / Modify / Delete / KickUser。
 service ObservationQuery {
   rpc GetMessageTimeline(GetMessageTimelineRequest) returns (GetMessageTimelineResponse);
   rpc GetDeliveryTimeline(GetDeliveryTimelineRequest) returns (GetDeliveryTimelineResponse);
@@ -12,102 +13,7 @@ service ObservationQuery {
   rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
 }
 
-// OperationsQuery：迁移期兼容契约，供尚未切换的客户端使用。
-// 时间字段一律 int64 UnixNano（纳秒），禁止与毫秒/秒混用。
-// 只读红线：永久禁止 ExecuteSQL / ExecuteShell / Resend / Modify / Delete / KickUser 等写能力。
-service OperationsQuery {
-  // 迁移兼容入口：转调 im.MessageQuery，后续停用，不再拥有业务查询实现。
-  rpc SearchMessages(SearchMessagesRequest) returns (SearchMessagesResponse);
-  // 迁移兼容入口：转调 user.UserQuery；响应仍为最小脱敏投影。
-  rpc FindUserReference(FindUserReferenceRequest) returns (FindUserReferenceResponse);
-
-  // 迁移兼容入口：转调 im.MessageQuery，再可选补充观测可用性。
-  rpc GetMessageRecord(GetMessageRecordRequest) returns (GetMessageRecordResponse);
-
-  // 消息生命周期事件流
-  rpc GetMessageTimeline(GetMessageTimelineRequest) returns (GetMessageTimelineResponse);
-
-  // 投递侧事件流（群聊按接收方拆分）
-  rpc GetDeliveryTimeline(GetDeliveryTimelineRequest) returns (GetDeliveryTimelineResponse);
-
-  // 连接状态历史观察（区分当前在线与历史在线）
-  rpc GetConnectionObservations(GetConnectionObservationsRequest) returns (GetConnectionObservationsResponse);
-
-  // 诚实的能力声明，取值仅 supported|partial|unsupported
-  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
-}
-
-message SearchMessagesRequest {
-  string senderId = 1;
-  string receiverId = 2; // 可选
-  int64 startTime = 3; // 必填 UnixNano，闭区间，最长 7 天
-  int64 endTime = 4;
-  int32 limit = 5; // 默认 10，最多 20
-}
-message MessageReference {
-  string messageId = 1;
-  string conversationId = 2;
-  string senderId = 3;
-  string receiverId = 4;
-  int64 createdAt = 5;
-}
-message SearchMessagesResponse {
-  repeated MessageReference messages = 1;
-  bool truncated = 2; // true 时需缩小范围，不能把当前一条视为唯一匹配
-  int64 observedAt = 3;
-}
-
-// ---------- common ----------
-
-// coverageStatus 只能是 complete | partial | unknown。
-// 存在观测缺口时禁止返回 complete。
-
-// ---------- FindUserReference ----------
-
-message FindUserReferenceRequest {
-  string userId = 1;    // 精确用户 ID
-  string nickname = 2;  // 昵称匹配，多命中全部返回
-  string phone = 3;     // 可选精确匹配；响应不回显
-  int32 limit = 4;
-}
-
-message UserReference {
-  string userId = 1;
-  string displayName = 2;
-  int32 status = 3;
-  int64 observedAt = 4; // UnixNano
-}
-
-message FindUserReferenceResponse {
-  repeated UserReference users = 1;
-  bool truncated = 2;
-}
-
-// ---------- GetMessageRecord ----------
-
-message GetMessageRecordRequest {
-  string messageId = 1; // 必填 24hex
-}
-
-message GetMessageRecordResponse {
-  bool found = 1;
-  string messageId = 2;
-  string conversationId = 3;
-  string senderId = 4;
-  string receiverId = 5;
-  int64 createdAt = 6;  // UnixNano
-  string source = 7;    // chat_log | compat-legacy | events-only
-  int64 observedAt = 8; // UnixNano
-  int32 chatType = 9;
-  int32 msgType = 10;
-  // 已读摘要：known | unknown | approximate；不返回 bitmap 与用户列表
-  string readState = 11;
-  string readStateNote = 12;
-  bool eventsAvailable = 13;
-  string note = 14;
-  // available | absent | unknown；观测失败时不能把 false 当成无事件。
-  string eventsState = 15;
-}
+// 只读观测契约；时间字段为 UnixNano，存在观测缺口时禁止返回 complete。
 
 // ---------- MessageEvent / timeline ----------
 

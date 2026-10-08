@@ -39,7 +39,7 @@ def main():
         raise RuntimeError("bind address must be 127.0.0.1 or 0.0.0.0")
     original = json.loads(execute("docker", "inspect", args.source))[0]
     if not original["State"]["Running"]:
-        raise RuntimeError("source OperationsQuery is not running")
+        raise RuntimeError("source ObservationQuery is not running")
     mounts = {item["Destination"]: item["Source"] for item in original["Mounts"]}
     source_config = Path(mounts["/operations/conf/operations.yaml"])
     config = yaml.safe_load(source_config.read_text())
@@ -49,11 +49,11 @@ def main():
     config["FaultInjection"] = {
         "Enabled": True,
         "Rules": {
-            "665f1c0000000000000000a1": "message_missing",
-            "665f1c0000000000000000a2": "query_timeout",
-            "665f1c0000000000000000a3": "permission_denied",
-            "665f1c0000000000000000a4": "wrong_message_id",
-            "665f1c0000000000000000a5": "malformed_response",
+            "665f1c0000000000000000a1": "delivery_empty",
+            "665f1c0000000000000000a2": "delivery_timeout",
+            "665f1c0000000000000000a3": "receiver_offline",
+            "665f1c0000000000000000a4": "ack_timeout",
+            "fault-user-timeout": "query_timeout",
             "665f1c0000000000000000a6": "unsupported_capability",
         },
     }

@@ -16,14 +16,6 @@ type Config struct {
 		Db  string
 	}
 
-	// 只读下游
-	// 仅供旧查询入口转调领域契约；观测查询不使用这些 RPC。
-	UserRpc          zrpc.RpcClientConf `json:",optional"`
-	ImRpc            zrpc.RpcClientConf `json:",optional"`
-	DomainQueryToken string             `json:",optional"`
-	// true 时完全不初始化领域客户端，只启动观测查询和旧观测兼容方法。
-	CompatibilityQueriesDisabled bool `json:",optional"`
-
 	// ServiceAuth 服务身份认证（metadata: x-im-service-token）
 	ServiceAuth struct {
 		Enable bool
@@ -51,14 +43,6 @@ type Config struct {
 }
 
 func (c Config) Validate() error {
-	if !c.CompatibilityQueriesDisabled {
-		if strings.TrimSpace(c.DomainQueryToken) == "" {
-			return fmt.Errorf("compatibility queries require domain query token")
-		}
-		if !rpcConfigured(c.ImRpc) || !rpcConfigured(c.UserRpc) {
-			return fmt.Errorf("compatibility queries require ImRpc and UserRpc endpoints")
-		}
-	}
 	if strings.TrimSpace(c.Mongo.Url) == "" || strings.TrimSpace(c.Mongo.Db) == "" {
 		return fmt.Errorf("operations query requires Mongo URL and database")
 	}
@@ -75,8 +59,4 @@ func (c Config) Validate() error {
 		return err
 	}
 	return nil
-}
-
-func rpcConfigured(c zrpc.RpcClientConf) bool {
-	return c.Target != "" || len(c.Endpoints) > 0 || (len(c.Etcd.Hosts) > 0 && c.Etcd.Key != "")
 }

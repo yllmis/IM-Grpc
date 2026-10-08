@@ -27,11 +27,8 @@ func (l *GetCapabilitiesLogic) GetCapabilities(_ *operations.GetCapabilitiesRequ
 		ackMode = observation.AckModeNoAck
 	}
 
-	// message_record：不依赖观测开关
+	// 业务事实属于领域契约，观测服务不声明这些能力。
 	messageRecord := "unsupported"
-	if l.svcCtx.MessageQueryRpc != nil {
-		messageRecord = "supported"
-	}
 
 	// 其余能力依赖观测事件；关闭时一律 unsupported
 	messageTimeline := "unsupported"
@@ -41,9 +38,6 @@ func (l *GetCapabilitiesLogic) GetCapabilities(_ *operations.GetCapabilitiesRequ
 	readConfirmation := "unsupported"
 	ackHistory := "unsupported"
 	messageSearch := "unsupported"
-	if l.svcCtx.MessageQueryRpc != nil {
-		messageSearch = "supported"
-	}
 
 	if enabled {
 		// 观测开启但可能丢事件 → partial（覆盖可证明完整前不上调 supported）

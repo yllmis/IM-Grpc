@@ -1,5 +1,5 @@
 // Package faultinject contains deterministic, read-only fault injection for
-// non-production OperationsQuery environments. It never mutates IM data.
+// non-production ObservationQuery environments. It never mutates IM data.
 package faultinject
 
 import (
@@ -12,11 +12,7 @@ import (
 type Scenario string
 
 const (
-	MessageMissing        Scenario = "message_missing"
 	QueryTimeout          Scenario = "query_timeout"
-	WrongMessageID        Scenario = "wrong_message_id"
-	MalformedResponse     Scenario = "malformed_response"
-	PermissionDenied      Scenario = "permission_denied"
 	DeliveryEmpty         Scenario = "delivery_empty"
 	DeliveryTimeout       Scenario = "delivery_timeout"
 	ReceiverOffline       Scenario = "receiver_offline"
@@ -25,11 +21,7 @@ const (
 )
 
 var allowedScenarios = map[Scenario]struct{}{
-	MessageMissing:        {},
 	QueryTimeout:          {},
-	WrongMessageID:        {},
-	MalformedResponse:     {},
-	PermissionDenied:      {},
 	DeliveryEmpty:         {},
 	DeliveryTimeout:       {},
 	ReceiverOffline:       {},
@@ -37,7 +29,7 @@ var allowedScenarios = map[Scenario]struct{}{
 	UnsupportedCapability: {},
 }
 
-// Config is loaded from the OperationsQuery YAML. Enabled defaults to false;
+// Config is loaded from the ObservationQuery YAML. Enabled defaults to false;
 // an empty Rules map therefore has zero runtime effect.
 type Config struct {
 	Enabled bool              `json:",optional"`

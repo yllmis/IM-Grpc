@@ -8,8 +8,7 @@ import (
 	"github.com/IM_System/apps/operations/rpc/operations"
 )
 
-// ObservationServer is the permanent observation-only contract. The legacy
-// OperationsQuery facade remains until connectors finish migration.
+// ObservationServer 只持有观测数据，不转调 User/IM 的业务查询。
 type ObservationServer struct {
 	operations.UnimplementedObservationQueryServer
 	svcCtx *svc.ServiceContext
@@ -28,12 +27,5 @@ func (s *ObservationServer) GetConnectionObservations(ctx context.Context, in *o
 	return logic.NewGetConnectionObservationsLogic(ctx, s.svcCtx).GetConnectionObservations(in)
 }
 func (s *ObservationServer) GetCapabilities(ctx context.Context, in *operations.GetCapabilitiesRequest) (*operations.GetCapabilitiesResponse, error) {
-	resp, err := logic.NewGetCapabilitiesLogic(ctx, s.svcCtx).GetCapabilities(in)
-	if err != nil {
-		return nil, err
-	}
-	// Capability declarations describe this contract, never another service.
-	resp.MessageRecord = "unsupported"
-	resp.MessageSearch = "unsupported"
-	return resp, nil
+	return logic.NewGetCapabilitiesLogic(ctx, s.svcCtx).GetCapabilities(in)
 }

@@ -40,7 +40,6 @@ func Run(c config.Config) {
 	auth := interceptor.NewAuth(c.ServiceAuth.Enable, append([]string{c.ServiceAuth.Token}, c.ServiceAuth.ExtraTokens...)...)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
-		operations.RegisterOperationsQueryServer(grpcServer, server.NewOperationsServer(ctx))
 		operations.RegisterObservationQueryServer(grpcServer, server.NewObservationServer(ctx))
 		reflection.Register(grpcServer)
 	})

@@ -21,608 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type SearchMessagesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SenderId      string                 `protobuf:"bytes,1,opt,name=senderId,proto3" json:"senderId,omitempty"`
-	ReceiverId    string                 `protobuf:"bytes,2,opt,name=receiverId,proto3" json:"receiverId,omitempty"` // 可选
-	StartTime     int64                  `protobuf:"varint,3,opt,name=startTime,proto3" json:"startTime,omitempty"`  // 必填 UnixNano，闭区间，最长 7 天
-	EndTime       int64                  `protobuf:"varint,4,opt,name=endTime,proto3" json:"endTime,omitempty"`
-	Limit         int32                  `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"` // 默认 10，最多 20
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SearchMessagesRequest) Reset() {
-	*x = SearchMessagesRequest{}
-	mi := &file_operations_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SearchMessagesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SearchMessagesRequest) ProtoMessage() {}
-
-func (x *SearchMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SearchMessagesRequest.ProtoReflect.Descriptor instead.
-func (*SearchMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *SearchMessagesRequest) GetSenderId() string {
-	if x != nil {
-		return x.SenderId
-	}
-	return ""
-}
-
-func (x *SearchMessagesRequest) GetReceiverId() string {
-	if x != nil {
-		return x.ReceiverId
-	}
-	return ""
-}
-
-func (x *SearchMessagesRequest) GetStartTime() int64 {
-	if x != nil {
-		return x.StartTime
-	}
-	return 0
-}
-
-func (x *SearchMessagesRequest) GetEndTime() int64 {
-	if x != nil {
-		return x.EndTime
-	}
-	return 0
-}
-
-func (x *SearchMessagesRequest) GetLimit() int32 {
-	if x != nil {
-		return x.Limit
-	}
-	return 0
-}
-
-type MessageReference struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	MessageId      string                 `protobuf:"bytes,1,opt,name=messageId,proto3" json:"messageId,omitempty"`
-	ConversationId string                 `protobuf:"bytes,2,opt,name=conversationId,proto3" json:"conversationId,omitempty"`
-	SenderId       string                 `protobuf:"bytes,3,opt,name=senderId,proto3" json:"senderId,omitempty"`
-	ReceiverId     string                 `protobuf:"bytes,4,opt,name=receiverId,proto3" json:"receiverId,omitempty"`
-	CreatedAt      int64                  `protobuf:"varint,5,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *MessageReference) Reset() {
-	*x = MessageReference{}
-	mi := &file_operations_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *MessageReference) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MessageReference) ProtoMessage() {}
-
-func (x *MessageReference) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MessageReference.ProtoReflect.Descriptor instead.
-func (*MessageReference) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *MessageReference) GetMessageId() string {
-	if x != nil {
-		return x.MessageId
-	}
-	return ""
-}
-
-func (x *MessageReference) GetConversationId() string {
-	if x != nil {
-		return x.ConversationId
-	}
-	return ""
-}
-
-func (x *MessageReference) GetSenderId() string {
-	if x != nil {
-		return x.SenderId
-	}
-	return ""
-}
-
-func (x *MessageReference) GetReceiverId() string {
-	if x != nil {
-		return x.ReceiverId
-	}
-	return ""
-}
-
-func (x *MessageReference) GetCreatedAt() int64 {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return 0
-}
-
-type SearchMessagesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Messages      []*MessageReference    `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
-	Truncated     bool                   `protobuf:"varint,2,opt,name=truncated,proto3" json:"truncated,omitempty"` // true 时需缩小范围，不能把当前一条视为唯一匹配
-	ObservedAt    int64                  `protobuf:"varint,3,opt,name=observedAt,proto3" json:"observedAt,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SearchMessagesResponse) Reset() {
-	*x = SearchMessagesResponse{}
-	mi := &file_operations_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SearchMessagesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SearchMessagesResponse) ProtoMessage() {}
-
-func (x *SearchMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SearchMessagesResponse.ProtoReflect.Descriptor instead.
-func (*SearchMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *SearchMessagesResponse) GetMessages() []*MessageReference {
-	if x != nil {
-		return x.Messages
-	}
-	return nil
-}
-
-func (x *SearchMessagesResponse) GetTruncated() bool {
-	if x != nil {
-		return x.Truncated
-	}
-	return false
-}
-
-func (x *SearchMessagesResponse) GetObservedAt() int64 {
-	if x != nil {
-		return x.ObservedAt
-	}
-	return 0
-}
-
-type FindUserReferenceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`     // 精确用户 ID
-	Nickname      string                 `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"` // 昵称匹配，多命中全部返回
-	Phone         string                 `protobuf:"bytes,3,opt,name=phone,proto3" json:"phone,omitempty"`       // 可选精确匹配；响应不回显
-	Limit         int32                  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FindUserReferenceRequest) Reset() {
-	*x = FindUserReferenceRequest{}
-	mi := &file_operations_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FindUserReferenceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FindUserReferenceRequest) ProtoMessage() {}
-
-func (x *FindUserReferenceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FindUserReferenceRequest.ProtoReflect.Descriptor instead.
-func (*FindUserReferenceRequest) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *FindUserReferenceRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *FindUserReferenceRequest) GetNickname() string {
-	if x != nil {
-		return x.Nickname
-	}
-	return ""
-}
-
-func (x *FindUserReferenceRequest) GetPhone() string {
-	if x != nil {
-		return x.Phone
-	}
-	return ""
-}
-
-func (x *FindUserReferenceRequest) GetLimit() int32 {
-	if x != nil {
-		return x.Limit
-	}
-	return 0
-}
-
-type UserReference struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
-	DisplayName   string                 `protobuf:"bytes,2,opt,name=displayName,proto3" json:"displayName,omitempty"`
-	Status        int32                  `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"`
-	ObservedAt    int64                  `protobuf:"varint,4,opt,name=observedAt,proto3" json:"observedAt,omitempty"` // UnixNano
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UserReference) Reset() {
-	*x = UserReference{}
-	mi := &file_operations_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UserReference) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UserReference) ProtoMessage() {}
-
-func (x *UserReference) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UserReference.ProtoReflect.Descriptor instead.
-func (*UserReference) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *UserReference) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *UserReference) GetDisplayName() string {
-	if x != nil {
-		return x.DisplayName
-	}
-	return ""
-}
-
-func (x *UserReference) GetStatus() int32 {
-	if x != nil {
-		return x.Status
-	}
-	return 0
-}
-
-func (x *UserReference) GetObservedAt() int64 {
-	if x != nil {
-		return x.ObservedAt
-	}
-	return 0
-}
-
-type FindUserReferenceResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Users         []*UserReference       `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
-	Truncated     bool                   `protobuf:"varint,2,opt,name=truncated,proto3" json:"truncated,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FindUserReferenceResponse) Reset() {
-	*x = FindUserReferenceResponse{}
-	mi := &file_operations_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FindUserReferenceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FindUserReferenceResponse) ProtoMessage() {}
-
-func (x *FindUserReferenceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FindUserReferenceResponse.ProtoReflect.Descriptor instead.
-func (*FindUserReferenceResponse) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *FindUserReferenceResponse) GetUsers() []*UserReference {
-	if x != nil {
-		return x.Users
-	}
-	return nil
-}
-
-func (x *FindUserReferenceResponse) GetTruncated() bool {
-	if x != nil {
-		return x.Truncated
-	}
-	return false
-}
-
-type GetMessageRecordRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MessageId     string                 `protobuf:"bytes,1,opt,name=messageId,proto3" json:"messageId,omitempty"` // 必填 24hex
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetMessageRecordRequest) Reset() {
-	*x = GetMessageRecordRequest{}
-	mi := &file_operations_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetMessageRecordRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetMessageRecordRequest) ProtoMessage() {}
-
-func (x *GetMessageRecordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetMessageRecordRequest.ProtoReflect.Descriptor instead.
-func (*GetMessageRecordRequest) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *GetMessageRecordRequest) GetMessageId() string {
-	if x != nil {
-		return x.MessageId
-	}
-	return ""
-}
-
-type GetMessageRecordResponse struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Found          bool                   `protobuf:"varint,1,opt,name=found,proto3" json:"found,omitempty"`
-	MessageId      string                 `protobuf:"bytes,2,opt,name=messageId,proto3" json:"messageId,omitempty"`
-	ConversationId string                 `protobuf:"bytes,3,opt,name=conversationId,proto3" json:"conversationId,omitempty"`
-	SenderId       string                 `protobuf:"bytes,4,opt,name=senderId,proto3" json:"senderId,omitempty"`
-	ReceiverId     string                 `protobuf:"bytes,5,opt,name=receiverId,proto3" json:"receiverId,omitempty"`
-	CreatedAt      int64                  `protobuf:"varint,6,opt,name=createdAt,proto3" json:"createdAt,omitempty"`   // UnixNano
-	Source         string                 `protobuf:"bytes,7,opt,name=source,proto3" json:"source,omitempty"`          // chat_log | compat-legacy | events-only
-	ObservedAt     int64                  `protobuf:"varint,8,opt,name=observedAt,proto3" json:"observedAt,omitempty"` // UnixNano
-	ChatType       int32                  `protobuf:"varint,9,opt,name=chatType,proto3" json:"chatType,omitempty"`
-	MsgType        int32                  `protobuf:"varint,10,opt,name=msgType,proto3" json:"msgType,omitempty"`
-	// 已读摘要：known | unknown | approximate；不返回 bitmap 与用户列表
-	ReadState       string `protobuf:"bytes,11,opt,name=readState,proto3" json:"readState,omitempty"`
-	ReadStateNote   string `protobuf:"bytes,12,opt,name=readStateNote,proto3" json:"readStateNote,omitempty"`
-	EventsAvailable bool   `protobuf:"varint,13,opt,name=eventsAvailable,proto3" json:"eventsAvailable,omitempty"`
-	Note            string `protobuf:"bytes,14,opt,name=note,proto3" json:"note,omitempty"`
-	// available | absent | unknown；观测失败时不能把 false 当成无事件。
-	EventsState   string `protobuf:"bytes,15,opt,name=eventsState,proto3" json:"eventsState,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetMessageRecordResponse) Reset() {
-	*x = GetMessageRecordResponse{}
-	mi := &file_operations_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetMessageRecordResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetMessageRecordResponse) ProtoMessage() {}
-
-func (x *GetMessageRecordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetMessageRecordResponse.ProtoReflect.Descriptor instead.
-func (*GetMessageRecordResponse) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *GetMessageRecordResponse) GetFound() bool {
-	if x != nil {
-		return x.Found
-	}
-	return false
-}
-
-func (x *GetMessageRecordResponse) GetMessageId() string {
-	if x != nil {
-		return x.MessageId
-	}
-	return ""
-}
-
-func (x *GetMessageRecordResponse) GetConversationId() string {
-	if x != nil {
-		return x.ConversationId
-	}
-	return ""
-}
-
-func (x *GetMessageRecordResponse) GetSenderId() string {
-	if x != nil {
-		return x.SenderId
-	}
-	return ""
-}
-
-func (x *GetMessageRecordResponse) GetReceiverId() string {
-	if x != nil {
-		return x.ReceiverId
-	}
-	return ""
-}
-
-func (x *GetMessageRecordResponse) GetCreatedAt() int64 {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return 0
-}
-
-func (x *GetMessageRecordResponse) GetSource() string {
-	if x != nil {
-		return x.Source
-	}
-	return ""
-}
-
-func (x *GetMessageRecordResponse) GetObservedAt() int64 {
-	if x != nil {
-		return x.ObservedAt
-	}
-	return 0
-}
-
-func (x *GetMessageRecordResponse) GetChatType() int32 {
-	if x != nil {
-		return x.ChatType
-	}
-	return 0
-}
-
-func (x *GetMessageRecordResponse) GetMsgType() int32 {
-	if x != nil {
-		return x.MsgType
-	}
-	return 0
-}
-
-func (x *GetMessageRecordResponse) GetReadState() string {
-	if x != nil {
-		return x.ReadState
-	}
-	return ""
-}
-
-func (x *GetMessageRecordResponse) GetReadStateNote() string {
-	if x != nil {
-		return x.ReadStateNote
-	}
-	return ""
-}
-
-func (x *GetMessageRecordResponse) GetEventsAvailable() bool {
-	if x != nil {
-		return x.EventsAvailable
-	}
-	return false
-}
-
-func (x *GetMessageRecordResponse) GetNote() string {
-	if x != nil {
-		return x.Note
-	}
-	return ""
-}
-
-func (x *GetMessageRecordResponse) GetEventsState() string {
-	if x != nil {
-		return x.EventsState
-	}
-	return ""
-}
-
 type MessageEvent struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	EventId         string                 `protobuf:"bytes,1,opt,name=eventId,proto3" json:"eventId,omitempty"`
@@ -646,7 +44,7 @@ type MessageEvent struct {
 
 func (x *MessageEvent) Reset() {
 	*x = MessageEvent{}
-	mi := &file_operations_proto_msgTypes[8]
+	mi := &file_operations_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -658,7 +56,7 @@ func (x *MessageEvent) String() string {
 func (*MessageEvent) ProtoMessage() {}
 
 func (x *MessageEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[8]
+	mi := &file_operations_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -671,7 +69,7 @@ func (x *MessageEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessageEvent.ProtoReflect.Descriptor instead.
 func (*MessageEvent) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{8}
+	return file_operations_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *MessageEvent) GetEventId() string {
@@ -792,7 +190,7 @@ type GetMessageTimelineRequest struct {
 
 func (x *GetMessageTimelineRequest) Reset() {
 	*x = GetMessageTimelineRequest{}
-	mi := &file_operations_proto_msgTypes[9]
+	mi := &file_operations_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -804,7 +202,7 @@ func (x *GetMessageTimelineRequest) String() string {
 func (*GetMessageTimelineRequest) ProtoMessage() {}
 
 func (x *GetMessageTimelineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[9]
+	mi := &file_operations_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -817,7 +215,7 @@ func (x *GetMessageTimelineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMessageTimelineRequest.ProtoReflect.Descriptor instead.
 func (*GetMessageTimelineRequest) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{9}
+	return file_operations_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetMessageTimelineRequest) GetMessageId() string {
@@ -870,7 +268,7 @@ type GetMessageTimelineResponse struct {
 
 func (x *GetMessageTimelineResponse) Reset() {
 	*x = GetMessageTimelineResponse{}
-	mi := &file_operations_proto_msgTypes[10]
+	mi := &file_operations_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -882,7 +280,7 @@ func (x *GetMessageTimelineResponse) String() string {
 func (*GetMessageTimelineResponse) ProtoMessage() {}
 
 func (x *GetMessageTimelineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[10]
+	mi := &file_operations_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -895,7 +293,7 @@ func (x *GetMessageTimelineResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMessageTimelineResponse.ProtoReflect.Descriptor instead.
 func (*GetMessageTimelineResponse) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{10}
+	return file_operations_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetMessageTimelineResponse) GetEvents() []*MessageEvent {
@@ -959,7 +357,7 @@ type GetDeliveryTimelineRequest struct {
 
 func (x *GetDeliveryTimelineRequest) Reset() {
 	*x = GetDeliveryTimelineRequest{}
-	mi := &file_operations_proto_msgTypes[11]
+	mi := &file_operations_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -971,7 +369,7 @@ func (x *GetDeliveryTimelineRequest) String() string {
 func (*GetDeliveryTimelineRequest) ProtoMessage() {}
 
 func (x *GetDeliveryTimelineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[11]
+	mi := &file_operations_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -984,7 +382,7 @@ func (x *GetDeliveryTimelineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeliveryTimelineRequest.ProtoReflect.Descriptor instead.
 func (*GetDeliveryTimelineRequest) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{11}
+	return file_operations_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetDeliveryTimelineRequest) GetMessageId() string {
@@ -1033,7 +431,7 @@ type DeliveryEvent struct {
 
 func (x *DeliveryEvent) Reset() {
 	*x = DeliveryEvent{}
-	mi := &file_operations_proto_msgTypes[12]
+	mi := &file_operations_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1045,7 +443,7 @@ func (x *DeliveryEvent) String() string {
 func (*DeliveryEvent) ProtoMessage() {}
 
 func (x *DeliveryEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[12]
+	mi := &file_operations_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1058,7 +456,7 @@ func (x *DeliveryEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeliveryEvent.ProtoReflect.Descriptor instead.
 func (*DeliveryEvent) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{12}
+	return file_operations_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DeliveryEvent) GetEventId() string {
@@ -1146,7 +544,7 @@ type GetDeliveryTimelineResponse struct {
 
 func (x *GetDeliveryTimelineResponse) Reset() {
 	*x = GetDeliveryTimelineResponse{}
-	mi := &file_operations_proto_msgTypes[13]
+	mi := &file_operations_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1158,7 +556,7 @@ func (x *GetDeliveryTimelineResponse) String() string {
 func (*GetDeliveryTimelineResponse) ProtoMessage() {}
 
 func (x *GetDeliveryTimelineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[13]
+	mi := &file_operations_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1171,7 +569,7 @@ func (x *GetDeliveryTimelineResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeliveryTimelineResponse.ProtoReflect.Descriptor instead.
 func (*GetDeliveryTimelineResponse) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{13}
+	return file_operations_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetDeliveryTimelineResponse) GetEvents() []*DeliveryEvent {
@@ -1238,7 +636,7 @@ type GetConnectionObservationsRequest struct {
 
 func (x *GetConnectionObservationsRequest) Reset() {
 	*x = GetConnectionObservationsRequest{}
-	mi := &file_operations_proto_msgTypes[14]
+	mi := &file_operations_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1250,7 +648,7 @@ func (x *GetConnectionObservationsRequest) String() string {
 func (*GetConnectionObservationsRequest) ProtoMessage() {}
 
 func (x *GetConnectionObservationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[14]
+	mi := &file_operations_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1263,7 +661,7 @@ func (x *GetConnectionObservationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetConnectionObservationsRequest.ProtoReflect.Descriptor instead.
 func (*GetConnectionObservationsRequest) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{14}
+	return file_operations_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetConnectionObservationsRequest) GetUserId() string {
@@ -1328,7 +726,7 @@ type ConnectionObservation struct {
 
 func (x *ConnectionObservation) Reset() {
 	*x = ConnectionObservation{}
-	mi := &file_operations_proto_msgTypes[15]
+	mi := &file_operations_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1340,7 +738,7 @@ func (x *ConnectionObservation) String() string {
 func (*ConnectionObservation) ProtoMessage() {}
 
 func (x *ConnectionObservation) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[15]
+	mi := &file_operations_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1353,7 +751,7 @@ func (x *ConnectionObservation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectionObservation.ProtoReflect.Descriptor instead.
 func (*ConnectionObservation) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{15}
+	return file_operations_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ConnectionObservation) GetConnectionId() string {
@@ -1404,7 +802,7 @@ type CurrentConnection struct {
 
 func (x *CurrentConnection) Reset() {
 	*x = CurrentConnection{}
-	mi := &file_operations_proto_msgTypes[16]
+	mi := &file_operations_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1416,7 +814,7 @@ func (x *CurrentConnection) String() string {
 func (*CurrentConnection) ProtoMessage() {}
 
 func (x *CurrentConnection) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[16]
+	mi := &file_operations_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1429,7 +827,7 @@ func (x *CurrentConnection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CurrentConnection.ProtoReflect.Descriptor instead.
 func (*CurrentConnection) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{16}
+	return file_operations_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CurrentConnection) GetOnline() bool {
@@ -1483,7 +881,7 @@ type GetConnectionObservationsResponse struct {
 
 func (x *GetConnectionObservationsResponse) Reset() {
 	*x = GetConnectionObservationsResponse{}
-	mi := &file_operations_proto_msgTypes[17]
+	mi := &file_operations_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1495,7 +893,7 @@ func (x *GetConnectionObservationsResponse) String() string {
 func (*GetConnectionObservationsResponse) ProtoMessage() {}
 
 func (x *GetConnectionObservationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[17]
+	mi := &file_operations_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1508,7 +906,7 @@ func (x *GetConnectionObservationsResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GetConnectionObservationsResponse.ProtoReflect.Descriptor instead.
 func (*GetConnectionObservationsResponse) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{17}
+	return file_operations_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetConnectionObservationsResponse) GetObservations() []*ConnectionObservation {
@@ -1575,7 +973,7 @@ type GetCapabilitiesRequest struct {
 
 func (x *GetCapabilitiesRequest) Reset() {
 	*x = GetCapabilitiesRequest{}
-	mi := &file_operations_proto_msgTypes[18]
+	mi := &file_operations_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1587,7 +985,7 @@ func (x *GetCapabilitiesRequest) String() string {
 func (*GetCapabilitiesRequest) ProtoMessage() {}
 
 func (x *GetCapabilitiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[18]
+	mi := &file_operations_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1600,7 +998,7 @@ func (x *GetCapabilitiesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCapabilitiesRequest.ProtoReflect.Descriptor instead.
 func (*GetCapabilitiesRequest) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{18}
+	return file_operations_proto_rawDescGZIP(), []int{10}
 }
 
 type GetCapabilitiesResponse struct {
@@ -1622,7 +1020,7 @@ type GetCapabilitiesResponse struct {
 
 func (x *GetCapabilitiesResponse) Reset() {
 	*x = GetCapabilitiesResponse{}
-	mi := &file_operations_proto_msgTypes[19]
+	mi := &file_operations_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1634,7 +1032,7 @@ func (x *GetCapabilitiesResponse) String() string {
 func (*GetCapabilitiesResponse) ProtoMessage() {}
 
 func (x *GetCapabilitiesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_operations_proto_msgTypes[19]
+	mi := &file_operations_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1647,7 +1045,7 @@ func (x *GetCapabilitiesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCapabilitiesResponse.ProtoReflect.Descriptor instead.
 func (*GetCapabilitiesResponse) Descriptor() ([]byte, []int) {
-	return file_operations_proto_rawDescGZIP(), []int{19}
+	return file_operations_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetCapabilitiesResponse) GetMessageSearch() string {
@@ -1732,67 +1130,7 @@ var File_operations_proto protoreflect.FileDescriptor
 const file_operations_proto_rawDesc = "" +
 	"\n" +
 	"\x10operations.proto\x12\n" +
-	"operations\"\xa1\x01\n" +
-	"\x15SearchMessagesRequest\x12\x1a\n" +
-	"\bsenderId\x18\x01 \x01(\tR\bsenderId\x12\x1e\n" +
-	"\n" +
-	"receiverId\x18\x02 \x01(\tR\n" +
-	"receiverId\x12\x1c\n" +
-	"\tstartTime\x18\x03 \x01(\x03R\tstartTime\x12\x18\n" +
-	"\aendTime\x18\x04 \x01(\x03R\aendTime\x12\x14\n" +
-	"\x05limit\x18\x05 \x01(\x05R\x05limit\"\xb2\x01\n" +
-	"\x10MessageReference\x12\x1c\n" +
-	"\tmessageId\x18\x01 \x01(\tR\tmessageId\x12&\n" +
-	"\x0econversationId\x18\x02 \x01(\tR\x0econversationId\x12\x1a\n" +
-	"\bsenderId\x18\x03 \x01(\tR\bsenderId\x12\x1e\n" +
-	"\n" +
-	"receiverId\x18\x04 \x01(\tR\n" +
-	"receiverId\x12\x1c\n" +
-	"\tcreatedAt\x18\x05 \x01(\x03R\tcreatedAt\"\x90\x01\n" +
-	"\x16SearchMessagesResponse\x128\n" +
-	"\bmessages\x18\x01 \x03(\v2\x1c.operations.MessageReferenceR\bmessages\x12\x1c\n" +
-	"\ttruncated\x18\x02 \x01(\bR\ttruncated\x12\x1e\n" +
-	"\n" +
-	"observedAt\x18\x03 \x01(\x03R\n" +
-	"observedAt\"z\n" +
-	"\x18FindUserReferenceRequest\x12\x16\n" +
-	"\x06userId\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
-	"\bnickname\x18\x02 \x01(\tR\bnickname\x12\x14\n" +
-	"\x05phone\x18\x03 \x01(\tR\x05phone\x12\x14\n" +
-	"\x05limit\x18\x04 \x01(\x05R\x05limit\"\x81\x01\n" +
-	"\rUserReference\x12\x16\n" +
-	"\x06userId\x18\x01 \x01(\tR\x06userId\x12 \n" +
-	"\vdisplayName\x18\x02 \x01(\tR\vdisplayName\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\x05R\x06status\x12\x1e\n" +
-	"\n" +
-	"observedAt\x18\x04 \x01(\x03R\n" +
-	"observedAt\"j\n" +
-	"\x19FindUserReferenceResponse\x12/\n" +
-	"\x05users\x18\x01 \x03(\v2\x19.operations.UserReferenceR\x05users\x12\x1c\n" +
-	"\ttruncated\x18\x02 \x01(\bR\ttruncated\"7\n" +
-	"\x17GetMessageRecordRequest\x12\x1c\n" +
-	"\tmessageId\x18\x01 \x01(\tR\tmessageId\"\xe2\x03\n" +
-	"\x18GetMessageRecordResponse\x12\x14\n" +
-	"\x05found\x18\x01 \x01(\bR\x05found\x12\x1c\n" +
-	"\tmessageId\x18\x02 \x01(\tR\tmessageId\x12&\n" +
-	"\x0econversationId\x18\x03 \x01(\tR\x0econversationId\x12\x1a\n" +
-	"\bsenderId\x18\x04 \x01(\tR\bsenderId\x12\x1e\n" +
-	"\n" +
-	"receiverId\x18\x05 \x01(\tR\n" +
-	"receiverId\x12\x1c\n" +
-	"\tcreatedAt\x18\x06 \x01(\x03R\tcreatedAt\x12\x16\n" +
-	"\x06source\x18\a \x01(\tR\x06source\x12\x1e\n" +
-	"\n" +
-	"observedAt\x18\b \x01(\x03R\n" +
-	"observedAt\x12\x1a\n" +
-	"\bchatType\x18\t \x01(\x05R\bchatType\x12\x18\n" +
-	"\amsgType\x18\n" +
-	" \x01(\x05R\amsgType\x12\x1c\n" +
-	"\treadState\x18\v \x01(\tR\treadState\x12$\n" +
-	"\rreadStateNote\x18\f \x01(\tR\rreadStateNote\x12(\n" +
-	"\x0feventsAvailable\x18\r \x01(\bR\x0feventsAvailable\x12\x12\n" +
-	"\x04note\x18\x0e \x01(\tR\x04note\x12 \n" +
-	"\veventsState\x18\x0f \x01(\tR\veventsState\"\xcd\x04\n" +
+	"operations\"\xcd\x04\n" +
 	"\fMessageEvent\x12\x18\n" +
 	"\aeventId\x18\x01 \x01(\tR\aeventId\x12\"\n" +
 	"\feventVersion\x18\x02 \x01(\x05R\feventVersion\x12\x1c\n" +
@@ -1930,14 +1268,6 @@ const file_operations_proto_rawDesc = "" +
 	"\x12GetMessageTimeline\x12%.operations.GetMessageTimelineRequest\x1a&.operations.GetMessageTimelineResponse\x12f\n" +
 	"\x13GetDeliveryTimeline\x12&.operations.GetDeliveryTimelineRequest\x1a'.operations.GetDeliveryTimelineResponse\x12x\n" +
 	"\x19GetConnectionObservations\x12,.operations.GetConnectionObservationsRequest\x1a-.operations.GetConnectionObservationsResponse\x12Z\n" +
-	"\x0fGetCapabilities\x12\".operations.GetCapabilitiesRequest\x1a#.operations.GetCapabilitiesResponse2\xce\x05\n" +
-	"\x0fOperationsQuery\x12W\n" +
-	"\x0eSearchMessages\x12!.operations.SearchMessagesRequest\x1a\".operations.SearchMessagesResponse\x12`\n" +
-	"\x11FindUserReference\x12$.operations.FindUserReferenceRequest\x1a%.operations.FindUserReferenceResponse\x12]\n" +
-	"\x10GetMessageRecord\x12#.operations.GetMessageRecordRequest\x1a$.operations.GetMessageRecordResponse\x12c\n" +
-	"\x12GetMessageTimeline\x12%.operations.GetMessageTimelineRequest\x1a&.operations.GetMessageTimelineResponse\x12f\n" +
-	"\x13GetDeliveryTimeline\x12&.operations.GetDeliveryTimelineRequest\x1a'.operations.GetDeliveryTimelineResponse\x12x\n" +
-	"\x19GetConnectionObservations\x12,.operations.GetConnectionObservationsRequest\x1a-.operations.GetConnectionObservationsResponse\x12Z\n" +
 	"\x0fGetCapabilities\x12\".operations.GetCapabilitiesRequest\x1a#.operations.GetCapabilitiesResponseB\x0eZ\f./operationsb\x06proto3"
 
 var (
@@ -1952,67 +1282,43 @@ func file_operations_proto_rawDescGZIP() []byte {
 	return file_operations_proto_rawDescData
 }
 
-var file_operations_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_operations_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_operations_proto_goTypes = []any{
-	(*SearchMessagesRequest)(nil),             // 0: operations.SearchMessagesRequest
-	(*MessageReference)(nil),                  // 1: operations.MessageReference
-	(*SearchMessagesResponse)(nil),            // 2: operations.SearchMessagesResponse
-	(*FindUserReferenceRequest)(nil),          // 3: operations.FindUserReferenceRequest
-	(*UserReference)(nil),                     // 4: operations.UserReference
-	(*FindUserReferenceResponse)(nil),         // 5: operations.FindUserReferenceResponse
-	(*GetMessageRecordRequest)(nil),           // 6: operations.GetMessageRecordRequest
-	(*GetMessageRecordResponse)(nil),          // 7: operations.GetMessageRecordResponse
-	(*MessageEvent)(nil),                      // 8: operations.MessageEvent
-	(*GetMessageTimelineRequest)(nil),         // 9: operations.GetMessageTimelineRequest
-	(*GetMessageTimelineResponse)(nil),        // 10: operations.GetMessageTimelineResponse
-	(*GetDeliveryTimelineRequest)(nil),        // 11: operations.GetDeliveryTimelineRequest
-	(*DeliveryEvent)(nil),                     // 12: operations.DeliveryEvent
-	(*GetDeliveryTimelineResponse)(nil),       // 13: operations.GetDeliveryTimelineResponse
-	(*GetConnectionObservationsRequest)(nil),  // 14: operations.GetConnectionObservationsRequest
-	(*ConnectionObservation)(nil),             // 15: operations.ConnectionObservation
-	(*CurrentConnection)(nil),                 // 16: operations.CurrentConnection
-	(*GetConnectionObservationsResponse)(nil), // 17: operations.GetConnectionObservationsResponse
-	(*GetCapabilitiesRequest)(nil),            // 18: operations.GetCapabilitiesRequest
-	(*GetCapabilitiesResponse)(nil),           // 19: operations.GetCapabilitiesResponse
-	nil,                                       // 20: operations.MessageEvent.MetadataEntry
-	nil,                                       // 21: operations.DeliveryEvent.MetadataEntry
+	(*MessageEvent)(nil),                      // 0: operations.MessageEvent
+	(*GetMessageTimelineRequest)(nil),         // 1: operations.GetMessageTimelineRequest
+	(*GetMessageTimelineResponse)(nil),        // 2: operations.GetMessageTimelineResponse
+	(*GetDeliveryTimelineRequest)(nil),        // 3: operations.GetDeliveryTimelineRequest
+	(*DeliveryEvent)(nil),                     // 4: operations.DeliveryEvent
+	(*GetDeliveryTimelineResponse)(nil),       // 5: operations.GetDeliveryTimelineResponse
+	(*GetConnectionObservationsRequest)(nil),  // 6: operations.GetConnectionObservationsRequest
+	(*ConnectionObservation)(nil),             // 7: operations.ConnectionObservation
+	(*CurrentConnection)(nil),                 // 8: operations.CurrentConnection
+	(*GetConnectionObservationsResponse)(nil), // 9: operations.GetConnectionObservationsResponse
+	(*GetCapabilitiesRequest)(nil),            // 10: operations.GetCapabilitiesRequest
+	(*GetCapabilitiesResponse)(nil),           // 11: operations.GetCapabilitiesResponse
+	nil,                                       // 12: operations.MessageEvent.MetadataEntry
+	nil,                                       // 13: operations.DeliveryEvent.MetadataEntry
 }
 var file_operations_proto_depIdxs = []int32{
-	1,  // 0: operations.SearchMessagesResponse.messages:type_name -> operations.MessageReference
-	4,  // 1: operations.FindUserReferenceResponse.users:type_name -> operations.UserReference
-	20, // 2: operations.MessageEvent.metadata:type_name -> operations.MessageEvent.MetadataEntry
-	8,  // 3: operations.GetMessageTimelineResponse.events:type_name -> operations.MessageEvent
-	21, // 4: operations.DeliveryEvent.metadata:type_name -> operations.DeliveryEvent.MetadataEntry
-	12, // 5: operations.GetDeliveryTimelineResponse.events:type_name -> operations.DeliveryEvent
-	15, // 6: operations.GetConnectionObservationsResponse.observations:type_name -> operations.ConnectionObservation
-	16, // 7: operations.GetConnectionObservationsResponse.current:type_name -> operations.CurrentConnection
-	9,  // 8: operations.ObservationQuery.GetMessageTimeline:input_type -> operations.GetMessageTimelineRequest
-	11, // 9: operations.ObservationQuery.GetDeliveryTimeline:input_type -> operations.GetDeliveryTimelineRequest
-	14, // 10: operations.ObservationQuery.GetConnectionObservations:input_type -> operations.GetConnectionObservationsRequest
-	18, // 11: operations.ObservationQuery.GetCapabilities:input_type -> operations.GetCapabilitiesRequest
-	0,  // 12: operations.OperationsQuery.SearchMessages:input_type -> operations.SearchMessagesRequest
-	3,  // 13: operations.OperationsQuery.FindUserReference:input_type -> operations.FindUserReferenceRequest
-	6,  // 14: operations.OperationsQuery.GetMessageRecord:input_type -> operations.GetMessageRecordRequest
-	9,  // 15: operations.OperationsQuery.GetMessageTimeline:input_type -> operations.GetMessageTimelineRequest
-	11, // 16: operations.OperationsQuery.GetDeliveryTimeline:input_type -> operations.GetDeliveryTimelineRequest
-	14, // 17: operations.OperationsQuery.GetConnectionObservations:input_type -> operations.GetConnectionObservationsRequest
-	18, // 18: operations.OperationsQuery.GetCapabilities:input_type -> operations.GetCapabilitiesRequest
-	10, // 19: operations.ObservationQuery.GetMessageTimeline:output_type -> operations.GetMessageTimelineResponse
-	13, // 20: operations.ObservationQuery.GetDeliveryTimeline:output_type -> operations.GetDeliveryTimelineResponse
-	17, // 21: operations.ObservationQuery.GetConnectionObservations:output_type -> operations.GetConnectionObservationsResponse
-	19, // 22: operations.ObservationQuery.GetCapabilities:output_type -> operations.GetCapabilitiesResponse
-	2,  // 23: operations.OperationsQuery.SearchMessages:output_type -> operations.SearchMessagesResponse
-	5,  // 24: operations.OperationsQuery.FindUserReference:output_type -> operations.FindUserReferenceResponse
-	7,  // 25: operations.OperationsQuery.GetMessageRecord:output_type -> operations.GetMessageRecordResponse
-	10, // 26: operations.OperationsQuery.GetMessageTimeline:output_type -> operations.GetMessageTimelineResponse
-	13, // 27: operations.OperationsQuery.GetDeliveryTimeline:output_type -> operations.GetDeliveryTimelineResponse
-	17, // 28: operations.OperationsQuery.GetConnectionObservations:output_type -> operations.GetConnectionObservationsResponse
-	19, // 29: operations.OperationsQuery.GetCapabilities:output_type -> operations.GetCapabilitiesResponse
-	19, // [19:30] is the sub-list for method output_type
-	8,  // [8:19] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	12, // 0: operations.MessageEvent.metadata:type_name -> operations.MessageEvent.MetadataEntry
+	0,  // 1: operations.GetMessageTimelineResponse.events:type_name -> operations.MessageEvent
+	13, // 2: operations.DeliveryEvent.metadata:type_name -> operations.DeliveryEvent.MetadataEntry
+	4,  // 3: operations.GetDeliveryTimelineResponse.events:type_name -> operations.DeliveryEvent
+	7,  // 4: operations.GetConnectionObservationsResponse.observations:type_name -> operations.ConnectionObservation
+	8,  // 5: operations.GetConnectionObservationsResponse.current:type_name -> operations.CurrentConnection
+	1,  // 6: operations.ObservationQuery.GetMessageTimeline:input_type -> operations.GetMessageTimelineRequest
+	3,  // 7: operations.ObservationQuery.GetDeliveryTimeline:input_type -> operations.GetDeliveryTimelineRequest
+	6,  // 8: operations.ObservationQuery.GetConnectionObservations:input_type -> operations.GetConnectionObservationsRequest
+	10, // 9: operations.ObservationQuery.GetCapabilities:input_type -> operations.GetCapabilitiesRequest
+	2,  // 10: operations.ObservationQuery.GetMessageTimeline:output_type -> operations.GetMessageTimelineResponse
+	5,  // 11: operations.ObservationQuery.GetDeliveryTimeline:output_type -> operations.GetDeliveryTimelineResponse
+	9,  // 12: operations.ObservationQuery.GetConnectionObservations:output_type -> operations.GetConnectionObservationsResponse
+	11, // 13: operations.ObservationQuery.GetCapabilities:output_type -> operations.GetCapabilitiesResponse
+	10, // [10:14] is the sub-list for method output_type
+	6,  // [6:10] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_operations_proto_init() }
@@ -2026,9 +1332,9 @@ func file_operations_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_operations_proto_rawDesc), len(file_operations_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   14,
 			NumExtensions: 0,
-			NumServices:   2,
+			NumServices:   1,
 		},
 		GoTypes:           file_operations_proto_goTypes,
 		DependencyIndexes: file_operations_proto_depIdxs,

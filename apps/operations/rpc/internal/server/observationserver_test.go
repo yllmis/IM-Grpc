@@ -32,13 +32,12 @@ func TestObservationContractHasNoBusinessQueries(t *testing.T) {
 		t.Fatalf("%+v %v", resp, err)
 	}
 }
-func TestBothContractsRequireOperationsCredential(t *testing.T) {
+func TestObservationAuthenticationAndLegacyRetirement(t *testing.T) {
 	lis := bufconn.Listen(1 << 20)
 	auth := serviceauth.NewAuth(true, "operations-secret")
 	gs := grpc.NewServer(grpc.UnaryInterceptor(auth.UnaryInterceptor))
 	s := &svc.ServiceContext{}
 	operations.RegisterObservationQueryServer(gs, NewObservationServer(s))
-	operations.RegisterOperationsQueryServer(gs, NewOperationsServer(s))
 	go gs.Serve(lis)
 	t.Cleanup(func() { gs.Stop(); lis.Close() })
 	conn, err := grpc.NewClient("passthrough:///test", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return lis.Dial() }))
@@ -48,7 +47,7 @@ func TestBothContractsRequireOperationsCredential(t *testing.T) {
 	defer conn.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	for _, method := range []string{"/operations.ObservationQuery/GetCapabilities", "/operations.OperationsQuery/GetCapabilities"} {
+	for _, method := range []string{"/operations.ObservationQuery/GetCapabilities"} {
 		var resp operations.GetCapabilitiesResponse
 		if err := conn.Invoke(ctx, method, &operations.GetCapabilitiesRequest{}, &resp); status.Code(err) != codes.PermissionDenied {
 			t.Fatalf("%s: %v", method, err)
@@ -56,5 +55,17 @@ func TestBothContractsRequireOperationsCredential(t *testing.T) {
 		if err := conn.Invoke(serviceauth.Outgoing(ctx, "operations-secret"), method, &operations.GetCapabilitiesRequest{}, &resp); err != nil {
 			t.Fatalf("%s: %v", method, err)
 		}
+	}
+	// 旧 wire path 必须不可调用，不能只删客户端或改返回为空。
+	for _, name := range []string{"GetCapabilities", "GetMessageRecord", "SearchMessages", "FindUserReference", "GetMessageTimeline", "GetDeliveryTimeline", "GetConnectionObservations"} {
+		var resp operations.GetCapabilitiesResponse
+		err := conn.Invoke(serviceauth.Outgoing(ctx, "operations-secret"), "/operations.OperationsQuery/"+name, &operations.GetCapabilitiesRequest{}, &resp)
+		if status.Code(err) != codes.Unimplemented {
+			t.Fatalf("legacy %s remains callable: %v", name, err)
+		}
+	}
+	services := operations.File_operations_proto.Services()
+	if services.Len() != 1 || string(services.Get(0).FullName()) != "operations.ObservationQuery" {
+		t.Fatal("legacy contract remains in protobuf descriptor")
 	}
 }

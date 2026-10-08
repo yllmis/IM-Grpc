@@ -6,21 +6,6 @@ Mongo:
   Url: "${OPERATIONS_MONGO_URL}"
   Db: yllmis-im
 
-UserRpc:
-  Etcd:
-    Hosts:
-      - etcd:2379
-    Key: user.rpc
-
-ImRpc:
-  Etcd:
-    Hosts:
-      - etcd:2379
-    Key: im.rpc
-
-DomainQueryToken: "${IM_DOMAIN_QUERY_TOKEN}"
-# Connector 全部切换后设为 true，可同时删除上述领域查询配置。
-CompatibilityQueriesDisabled: false
 
 ServiceAuth:
   Enable: true

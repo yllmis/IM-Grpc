@@ -4,13 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/IM_System/apps/im/rpc/im"
 	"github.com/IM_System/apps/operations/rpc/internal/faultinject"
 	"github.com/IM_System/apps/operations/rpc/internal/svc"
 	"github.com/IM_System/apps/operations/rpc/operations"
 	"github.com/IM_System/apps/operations/rpc/operationsmodels"
 	"github.com/IM_System/pkg/observation"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -64,22 +62,6 @@ func (f *fakeEventModel) FindOneByID(_ context.Context, _ string) (*observation.
 	return nil, operationsmodels.ErrNotFound
 }
 
-type fakeMessageQuery struct {
-	im.MessageQueryClient
-	record *im.MessageRecordResponse
-	err    error
-}
-
-func (f *fakeMessageQuery) GetMessageRecord(_ context.Context, in *im.MessageRecordRequest, _ ...grpc.CallOption) (*im.MessageRecordResponse, error) {
-	if f.err != nil {
-		return nil, f.err
-	}
-	if f.record == nil {
-		return &im.MessageRecordResponse{MessageId: in.MessageId, ObservedAt: 42}, nil
-	}
-	return f.record, nil
-}
-
 func codeOf(err error) codes.Code {
 	if err == nil {
 		return codes.OK
@@ -97,71 +79,6 @@ func TestCursorRoundTrip(t *testing.T) {
 	}
 	if _, _, err := DecodeCursor("!!!bad"); codeOf(err) != codes.InvalidArgument {
 		t.Fatal("bad cursor must be INVALID_ARGUMENT")
-	}
-}
-
-// ---- GetMessageRecord ----
-
-func TestGetMessageRecord_InvalidID(t *testing.T) {
-	l := &GetMessageRecordLogic{ctx: context.Background(), svcCtx: &svc.ServiceContext{}}
-	_, err := l.GetMessageRecord(&operations.GetMessageRecordRequest{MessageId: ""})
-	if codeOf(err) != codes.InvalidArgument {
-		t.Fatalf("empty id must INVALID_ARGUMENT, got %v", err)
-	}
-	_, err = l.GetMessageRecord(&operations.GetMessageRecordRequest{MessageId: "bad"})
-	if codeOf(err) != codes.InvalidArgument {
-		t.Fatalf("bad id must INVALID_ARGUMENT, got %v", err)
-	}
-}
-
-func TestGetMessageRecord_NotFoundIsOK(t *testing.T) {
-	svcCtx := &svc.ServiceContext{
-		MessageQueryRpc: &fakeMessageQuery{},
-		EventModel:      &fakeEventModel{},
-	}
-	l := NewGetMessageRecordLogic(context.Background(), svcCtx)
-
-	resp, err := l.GetMessageRecord(&operations.GetMessageRecordRequest{MessageId: "665f1c0000000000000000aa"})
-	if err != nil {
-		t.Fatalf("not found must be OK empty result, got %v", err)
-	}
-	if resp.Found {
-		t.Fatal("found must be false")
-	}
-	if resp.Note == "" {
-		t.Fatal("note must explain query-succeeded-no-record")
-	}
-}
-
-func TestFaultInjectionMessageScenariosAreReadOnly(t *testing.T) {
-	id := "665f1c0000000000000000aa"
-	for _, tc := range []struct {
-		name     string
-		scenario faultinject.Scenario
-		wantCode codes.Code
-		wantNote string
-	}{
-		{name: "missing", scenario: faultinject.MessageMissing, wantNote: "injected-query-succeeded-no-record"},
-		{name: "timeout", scenario: faultinject.QueryTimeout, wantCode: codes.DeadlineExceeded},
-		{name: "permission", scenario: faultinject.PermissionDenied, wantCode: codes.PermissionDenied},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			svcCtx := &svc.ServiceContext{FaultInjection: faultinject.Config{
-				Enabled: true,
-				Rules:   map[string]string{id: string(tc.scenario)},
-			}}
-			resp, err := NewGetMessageRecordLogic(context.Background(), svcCtx).GetMessageRecord(&operations.GetMessageRecordRequest{MessageId: id})
-			if code := codeOf(err); code != tc.wantCode {
-				t.Fatalf("code=%v want=%v", code, tc.wantCode)
-			}
-			if tc.wantNote != "" && (resp == nil || resp.Note != tc.wantNote) {
-				actualNote := "<nil>"
-				if resp != nil {
-					actualNote = resp.Note
-				}
-				t.Fatalf("note=%q want=%q", actualNote, tc.wantNote)
-			}
-		})
 	}
 }
 
@@ -187,64 +104,15 @@ func TestFaultInjectionDeliveryAndConnectionScenarios(t *testing.T) {
 	}
 }
 
-func TestGetMessageRecord_TimeoutIsErrorNotNotFound(t *testing.T) {
-	svcCtx := &svc.ServiceContext{
-		MessageQueryRpc: &fakeMessageQuery{err: context.DeadlineExceeded},
-		EventModel:      &fakeEventModel{},
-	}
-	l := NewGetMessageRecordLogic(context.Background(), svcCtx)
-
-	resp, err := l.GetMessageRecord(&operations.GetMessageRecordRequest{MessageId: "665f1c0000000000000000aa"})
-	if err == nil {
-		t.Fatalf("timeout must be error, not found=%v", resp)
-	}
-	if codeOf(err) != codes.DeadlineExceeded {
-		t.Fatalf("timeout must be DEADLINE_EXCEEDED, got %v", err)
-	}
-	if resp != nil && resp.Found {
-		t.Fatal("timeout must not claim found=false")
-	}
-}
-
-func TestGetMessageRecord_Found(t *testing.T) {
-	oid := "665f1c0000000000000000aa"
-	svcCtx := &svc.ServiceContext{
-		MessageQueryRpc: &fakeMessageQuery{record: &im.MessageRecordResponse{
-			Found: true, MessageId: oid,
-			ConversationId: "c1",
-			SenderId:       "u1",
-			ReceiverId:     "u2",
-			CreatedAt:      42,
-			ReadState:      "known",
-		}},
-		EventModel: &fakeEventModel{events: []*observation.MessageEvent{{EventID: "e1"}}},
-	}
-	l := NewGetMessageRecordLogic(context.Background(), svcCtx)
-	resp, err := l.GetMessageRecord(&operations.GetMessageRecordRequest{MessageId: oid})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !resp.Found || resp.SenderId != "u1" {
-		t.Fatalf("resp=%+v", resp)
-	}
-	if resp.ReadState != "known" {
-		t.Fatalf("readState=%s", resp.ReadState)
-	}
-	if !resp.EventsAvailable {
-		t.Fatal("eventsAvailable must be true")
-	}
-	// 脱敏：响应中不得有正文字段（proto 本身无 msgContent）
-}
-
 // ---- capabilities ----
 
 func TestGetCapabilities_HonestDefaults(t *testing.T) {
-	s := &svc.ServiceContext{MessageQueryRpc: &fakeMessageQuery{}}
+	s := &svc.ServiceContext{}
 	resp, err := NewGetCapabilitiesLogic(context.Background(), s).GetCapabilities(&operations.GetCapabilitiesRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.MessageRecord != "supported" {
+	if resp.MessageRecord != "unsupported" {
 		t.Fatalf("message_record=%s", resp.MessageRecord)
 	}
 	if resp.MessageTimeline != "unsupported" || resp.DeliveryEvents != "unsupported" ||
