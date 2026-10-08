@@ -3,6 +3,7 @@ package serviceauth
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -26,6 +27,23 @@ func (c Config) Validate() error {
 		return fmt.Errorf("enabled read-query service requires a token")
 	}
 	return nil
+}
+
+// WithEnvironmentToken keeps deployment secrets outside Sail/etcd. When the
+// variable is absent, existing YAML behavior is preserved. An explicitly empty
+// value fails startup instead of silently falling back to another credential.
+func WithEnvironmentToken(c Config, key string) (Config, error) {
+	value, present := os.LookupEnv(key)
+	if !present {
+		return c, c.Validate()
+	}
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return Config{}, fmt.Errorf("read-query environment token is empty: %s", key)
+	}
+	c.Enable = true
+	c.Token = value
+	return c, c.Validate()
 }
 
 // Guard protects only the specified service. Legacy methods remain unchanged.

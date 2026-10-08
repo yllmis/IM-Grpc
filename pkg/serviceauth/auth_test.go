@@ -49,3 +49,21 @@ func TestEnabledAuthRequiresPrimaryToken(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestEnvironmentTokenOverridesOnlyReadQueryAuth(t *testing.T) {
+	const key = "IM_QUERY_TOKEN_TEST_ONLY"
+	original := Config{ExtraTokens: []string{"rotation-test-token"}}
+	c, err := WithEnvironmentToken(original, key)
+	if err != nil || c.Enable {
+		t.Fatal("absent override must preserve disabled configuration")
+	}
+	t.Setenv(key, "injected-test-token")
+	c, err = WithEnvironmentToken(original, key)
+	if err != nil || !c.Enable || c.Token != "injected-test-token" || len(c.ExtraTokens) != 1 || original.Enable || original.Token != "" {
+		t.Fatal("environment override changed unrelated configuration")
+	}
+	t.Setenv(key, " ")
+	if _, err := WithEnvironmentToken(original, key); err == nil {
+		t.Fatal("explicitly empty deployment credential must fail closed")
+	}
+}

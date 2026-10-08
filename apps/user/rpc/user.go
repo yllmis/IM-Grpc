@@ -75,7 +75,9 @@ func main() {
 }
 
 func Run(c config.Config) {
-	if err := c.ReadQueryAuth.Validate(); err != nil {
+	var err error
+	c.ReadQueryAuth, err = serviceauth.WithEnvironmentToken(c.ReadQueryAuth, "IM_USER_QUERY_TOKEN")
+	if err != nil {
 		panic(err)
 	}
 	ctx := svc.NewServiceContext(c)
