@@ -80,6 +80,13 @@ func Run(c config.Config) {
 	if err != nil {
 		panic(err)
 	}
+	businessAuth, err := serviceauth.BusinessConfig()
+	if err != nil {
+		panic(err)
+	}
+	if err := serviceauth.RequireSeparateCredentials(businessAuth, c.ReadQueryAuth); err != nil {
+		panic(err)
+	}
 	ctx := svc.NewServiceContext(c)
 
 	if err := ctx.SetRootToken(); err != nil {
@@ -98,7 +105,7 @@ func Run(c config.Config) {
 			reflection.Register(grpcServer)
 		}
 	})
-	s.AddUnaryInterceptors(serviceauth.Guard(c.ReadQueryAuth, "user.UserQuery"), rpcserver.LoginInterceptorfunc)
+	s.AddUnaryInterceptors(serviceauth.Guard(businessAuth, "user.User"), serviceauth.Guard(c.ReadQueryAuth, "user.UserQuery"), rpcserver.LoginInterceptorfunc)
 	defer s.Stop()
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

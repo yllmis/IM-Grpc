@@ -12,6 +12,7 @@ import (
 	"github.com/IM_System/apps/task/mq/internal/telemetry"
 	"github.com/IM_System/pkg/constants"
 	"github.com/IM_System/pkg/observation"
+	"github.com/IM_System/pkg/serviceauth"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/zrpc"
 	"golang.org/x/time/rate"
@@ -89,6 +90,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 	svc.Redis = redis.MustNewRedis(c.Redisx)
 	svc.Social = socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc,
+		zrpc.WithUnaryClientInterceptor(serviceauth.MustBusinessClientInterceptor()),
 		zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy))))
 
 	token, err := svc.GetSystemToken()

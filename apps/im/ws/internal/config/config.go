@@ -3,12 +3,16 @@ package config
 import (
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/core/stores/redis"
+	"github.com/zeromicro/go-zero/zrpc"
 )
 
 type Config struct {
 	service.ServiceConf
 
 	ListenOn string
+	// Required when starting the WS service: used for authoritative group
+	// membership checks before chat/read requests enter Kafka.
+	SocialRpc zrpc.RpcClientConf `json:",optional"`
 
 	JwtAuth struct {
 		AccessSecret string

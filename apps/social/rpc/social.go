@@ -12,6 +12,7 @@ import (
 	"github.com/IM_System/pkg/configserver"
 	"github.com/IM_System/pkg/interceptor"
 	"github.com/IM_System/pkg/interceptor/rpcserver"
+	"github.com/IM_System/pkg/serviceauth"
 
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
@@ -74,6 +75,10 @@ func main() {
 }
 
 func Run(c config.Config) {
+	businessAuth, err := serviceauth.BusinessConfig()
+	if err != nil {
+		panic(err)
+	}
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
@@ -88,7 +93,7 @@ func Run(c config.Config) {
 		}
 	})
 
-	s.AddUnaryInterceptors(rpcserver.LoginInterceptorfunc, rpcserver.SyncxLimitInterceptor(200))
+	s.AddUnaryInterceptors(serviceauth.Guard(businessAuth, "social.social"), rpcserver.LoginInterceptorfunc, rpcserver.SyncxLimitInterceptor(200))
 	s.AddUnaryInterceptors(interceptor.NewIdempotentServer(interceptor.NewDefaultIdempotent(c.Cache[0].RedisConf)))
 	defer s.Stop()
 

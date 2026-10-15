@@ -7,6 +7,7 @@ import (
 	"github.com/IM_System/apps/user/api/internal/config"
 	"github.com/IM_System/apps/user/rpc/userclient"
 	"github.com/IM_System/pkg/middleware"
+	"github.com/IM_System/pkg/serviceauth"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
@@ -38,6 +39,7 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	businessCredential := serviceauth.MustBusinessClientInterceptor()
 	return &ServiceContext{
 		Config: c,
 
@@ -45,6 +47,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		LimitMiddleware:       middleware.NewLimitMiddleware(c.Redisx).TokenLimitHandler(1, 100),
 		Redis:                 redis.MustNewRedis(c.Redisx),
 
-		User: userclient.NewUser(zrpc.MustNewClient(c.UserRpc, zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
+		User: userclient.NewUser(zrpc.MustNewClient(c.UserRpc, zrpc.WithUnaryClientInterceptor(businessCredential), zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
 	}
 }

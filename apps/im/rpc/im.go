@@ -71,6 +71,13 @@ func Run(c config.Config) {
 	if err != nil {
 		panic(err)
 	}
+	businessAuth, err := serviceauth.BusinessConfig()
+	if err != nil {
+		panic(err)
+	}
+	if err := serviceauth.RequireSeparateCredentials(businessAuth, c.ReadQueryAuth); err != nil {
+		panic(err)
+	}
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
@@ -81,7 +88,7 @@ func Run(c config.Config) {
 			reflection.Register(grpcServer)
 		}
 	})
-	s.AddUnaryInterceptors(serviceauth.Guard(c.ReadQueryAuth, "im.MessageQuery"), rpcserver.LoginInterceptorfunc)
+	s.AddUnaryInterceptors(serviceauth.Guard(businessAuth, "im.Im"), serviceauth.Guard(c.ReadQueryAuth, "im.MessageQuery"), rpcserver.LoginInterceptorfunc)
 
 	defer s.Stop()
 

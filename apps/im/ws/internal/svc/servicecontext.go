@@ -5,9 +5,12 @@ import (
 
 	"github.com/IM_System/apps/im/immodels"
 	"github.com/IM_System/apps/im/ws/internal/config"
+	"github.com/IM_System/apps/social/rpc/socialclient"
 	"github.com/IM_System/apps/task/mq/mqclient"
 	"github.com/IM_System/pkg/observation"
+	"github.com/IM_System/pkg/serviceauth"
 	"github.com/zeromicro/go-zero/core/stores/redis"
+	"github.com/zeromicro/go-zero/zrpc"
 )
 
 type ServiceContext struct {
@@ -16,6 +19,7 @@ type ServiceContext struct {
 	*redis.Redis
 
 	immodels.ChatLogModel
+	Social socialclient.Social
 
 	mqclient.MsgChatTransferClient
 	mqclient.MsgReadTransferClient
@@ -25,6 +29,8 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	businessCredential := serviceauth.MustBusinessClientInterceptor()
+	socialRPC := socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc, zrpc.WithUnaryClientInterceptor(businessCredential)))
 	sink := newObservationSink(c)
 
 	chatClient := mqclient.WithObservationSink(
@@ -37,6 +43,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Redis:                 redis.MustNewRedis(c.Redisx),
 		MsgChatTransferClient: chatClient,
 		ChatLogModel:          immodels.MustChatLogModel(c.Mongo.Url, c.Mongo.Db),
+		Social:                socialRPC,
 		MsgReadTransferClient: mqclient.NewMsgReadTransferClient(c.MsgReadTransfer.Addrs, c.MsgReadTransfer.Topic),
 		ObservationSink:       sink,
 	}

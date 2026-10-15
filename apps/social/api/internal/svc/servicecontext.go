@@ -10,6 +10,7 @@ import (
 	"github.com/IM_System/apps/user/rpc/userclient"
 	"github.com/IM_System/pkg/interceptor"
 	"github.com/IM_System/pkg/middleware"
+	"github.com/IM_System/pkg/serviceauth"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/rest"
 	"github.com/zeromicro/go-zero/zrpc"
@@ -43,6 +44,7 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
+	businessCredential := serviceauth.MustBusinessClientInterceptor()
 	return &ServiceContext{
 		Config: c,
 
@@ -51,11 +53,14 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Redis:                 redis.MustNewRedis(c.Redisx),
 
 		UserRpc: userclient.NewUser(zrpc.MustNewClient(c.UserRpc,
+			zrpc.WithUnaryClientInterceptor(businessCredential),
 			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
 		SocialRpc: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc,
+			zrpc.WithUnaryClientInterceptor(businessCredential),
 			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)),
 			zrpc.WithUnaryClientInterceptor(interceptor.DefaultIdempotentClient))),
 		ImRpc: imclient.NewIm(zrpc.MustNewClient(c.ImRpc,
+			zrpc.WithUnaryClientInterceptor(businessCredential),
 			zrpc.WithDialOption(grpc.WithDefaultServiceConfig(retryPolicy)))),
 	}
 }
