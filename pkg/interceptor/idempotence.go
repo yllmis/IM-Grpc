@@ -44,9 +44,14 @@ func NewIdempotentClient(idempotent Idempotent) grpc.UnaryClientInterceptor {
 		// 获取唯一的key
 		identify := idempotent.Identify(ctx, method)
 		// 在rpc中设置请求中的头部信息
-		ctx = metadata.NewOutgoingContext(ctx, map[string][]string{
-			Dkey: {identify},
-		})
+		md, _ := metadata.FromOutgoingContext(ctx)
+		md = md.Copy()
+		if identify == "" {
+			md.Delete(Dkey)
+		} else {
+			md.Set(Dkey, identify)
+		}
+		ctx = metadata.NewOutgoingContext(ctx, md)
 
 		return invoker(ctx, method, req, reply, cc, opts...)
 
@@ -57,7 +62,7 @@ func NewIdempotentServer(idempotent Idempotent) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 		// 获取请求id
 		identify := metadata.ValueFromIncomingContext(ctx, Dkey)
-		if len(identify) == 0 || !idempotent.IsIdempotentMethod(info.FullMethod) {
+		if len(identify) == 0 || identify[0] == "" || !idempotent.IsIdempotentMethod(info.FullMethod) {
 			// 不支持幂等性，直接执行
 			return handler(ctx, req)
 		}
@@ -117,11 +122,11 @@ func NewDefaultIdempotent(c redis.RedisConf) Idempotent {
 		method: map[string]bool{
 			// 好友写操作
 			"/social.social/FriendPutIn":       true,
-			"/social.social/FriendPutInHandle":  true,
+			"/social.social/FriendPutInHandle": true,
 			// 群写操作
-			"/social.social/GroupCreate":       true,
-			"/social.social/GroupPutin":        true,
-			"/social.social/GroupPutInHandle":  true,
+			"/social.social/GroupCreate":      true,
+			"/social.social/GroupPutin":       true,
+			"/social.social/GroupPutInHandle": true,
 		},
 	}
 }

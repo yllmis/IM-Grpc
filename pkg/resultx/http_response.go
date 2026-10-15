@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	zrpcErr "github.com/zeromicro/x/errors"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -41,6 +42,7 @@ func ErrHandler(name string) func(ctx context.Context, err error) (int, any) {
 	return func(ctx context.Context, err error) (int, any) {
 		errcode := xerr.SERVER_COMMON_ERR
 		errmsg := xerr.ErrMsg(errcode)
+		httpStatus := http.StatusBadRequest
 
 		causeErr := errors.Cause(err)
 		if e, ok := causeErr.(*zrpcErr.CodeMsg); ok {
@@ -50,11 +52,17 @@ func ErrHandler(name string) func(ctx context.Context, err error) (int, any) {
 			if gstatus, ok := status.FromError(err); ok {
 				errcode = int(gstatus.Code())
 				errmsg = gstatus.Message()
+				switch gstatus.Code() {
+				case codes.Unauthenticated:
+					httpStatus = http.StatusUnauthorized
+				case codes.PermissionDenied:
+					httpStatus = http.StatusForbidden
+				}
 			}
 		}
 
 		logx.WithContext(ctx).Errorf("【%s】 err %v", name, err)
 
-		return http.StatusBadRequest, Fail(errcode, errmsg)
+		return httpStatus, Fail(errcode, errmsg)
 	}
 }
