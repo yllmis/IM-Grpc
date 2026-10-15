@@ -40,8 +40,12 @@ func (j *JwtAuth) Auth(w http.ResponseWriter, r *http.Request) bool {
 	if !ok {
 		return false
 	}
+	uid, ok := claims[ctxdata.Identify].(string)
+	if !ok || uid == "" {
+		return false
+	}
 
-	*r = *r.WithContext(context.WithValue(r.Context(), ctxdata.Identify, claims[ctxdata.Identify]))
+	*r = *r.WithContext(context.WithValue(r.Context(), ctxdata.Identify, uid))
 
 	return true
 }

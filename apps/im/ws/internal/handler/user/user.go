@@ -3,11 +3,16 @@ package user
 import (
 	"github.com/IM_System/apps/im/ws/internal/svc"
 	"github.com/IM_System/apps/im/ws/websocket"
+	"github.com/IM_System/pkg/useraccess"
 )
 
 // 获取所有在线用户
 func Online(svc *svc.ServiceContext) websocket.HandlerFunc {
 	return func(srv *websocket.Server, conn *websocket.Conn, msg *websocket.Message) {
+		if err := useraccess.RequireSystem(conn.Uid); err != nil {
+			srv.Send(websocket.NewErrMessgae(err), conn)
+			return
+		}
 		// 获取在线用户列表
 		uids := srv.GetUsers()
 		u := srv.GetUsers(conn)

@@ -8,9 +8,7 @@ import (
 	"github.com/IM_System/apps/im/ws/websocket"
 	"github.com/IM_System/apps/im/ws/ws"
 	"github.com/IM_System/apps/task/mq/mq"
-	"github.com/IM_System/pkg/constants"
 	"github.com/IM_System/pkg/observation"
-	"github.com/IM_System/pkg/wuid"
 	"github.com/mitchellh/mapstructure"
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -23,14 +21,14 @@ func Chat(svc *svc.ServiceContext) websocket.HandlerFunc {
 			return
 		}
 
-		if data.ConversationId == "" {
-			switch data.ChatType {
-			case constants.SingleChatType:
-				data.ConversationId = wuid.CombineId(conn.Uid, data.RecvId)
-			case constants.GroupChatType:
-				data.ConversationId = data.RecvId // 群聊的conversationId就是群id,RecvId 是群id
-			}
+		ctx, cancel := context.WithTimeout(context.Background(), permissionLookupTimeout)
+		conversationID, err := authorizeChat(ctx, svc, conn.Uid, data.RecvId, data.ConversationId, data.ChatType)
+		cancel()
+		if err != nil {
+			srv.Send(websocket.NewErrMessgae(err), conn)
+			return
 		}
+		data.ConversationId = conversationID
 
 		// 稳定消息 ID：仅在显式开启后生成并进入链路，保证默认零行为变化
 		ident := NewMessageIdentity(svc.Config.MessageIdentity.EmitServerMessageId, msg.Id)
@@ -48,7 +46,7 @@ func Chat(svc *svc.ServiceContext) websocket.HandlerFunc {
 			}.Accepted())
 		}
 
-		err := svc.MsgChatTransferClient.Push(&mq.MsgChatTransfer{
+		err = svc.MsgChatTransferClient.Push(&mq.MsgChatTransfer{
 			MessageId:       ident.MessageId,
 			ClientMessageId: ident.ClientMessageId,
 			CorrelationId:   ident.CorrelationId,
@@ -84,16 +82,16 @@ func MarkRead(svc *svc.ServiceContext) websocket.HandlerFunc {
 			return
 		}
 
-		if data.ConversationId == "" {
-			switch data.ChatType {
-			case constants.SingleChatType:
-				data.ConversationId = wuid.CombineId(conn.Uid, data.RecvId)
-			case constants.GroupChatType:
-				data.ConversationId = data.RecvId // 群聊的conversationId就是群id, RecvId是群id
-			}
+		ctx, cancel := context.WithTimeout(context.Background(), permissionLookupTimeout)
+		conversationID, err := authorizeRead(ctx, svc, conn.Uid, data.RecvId, data.ConversationId, data.ChatType, data.MsgIds)
+		cancel()
+		if err != nil {
+			srv.Send(websocket.NewErrMessgae(err), conn)
+			return
 		}
+		data.ConversationId = conversationID
 
-		err := svc.MsgReadTransferClient.Push(&mq.MsgMarkRead{
+		err = svc.MsgReadTransferClient.Push(&mq.MsgMarkRead{
 			ConversationId: data.ConversationId,
 			SendId:         conn.Uid,
 			RecvId:         data.RecvId,

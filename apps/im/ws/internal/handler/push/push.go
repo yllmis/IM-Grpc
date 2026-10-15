@@ -8,6 +8,7 @@ import (
 	"github.com/IM_System/apps/im/ws/ws"
 	"github.com/IM_System/pkg/constants"
 	"github.com/IM_System/pkg/observation"
+	"github.com/IM_System/pkg/useraccess"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -16,6 +17,10 @@ import (
 
 func Push(svc *svc.ServiceContext) websocket.HandlerFunc {
 	return func(srv *websocket.Server, conn *websocket.Conn, msg *websocket.Message) {
+		if err := useraccess.RequireSystem(conn.Uid); err != nil {
+			srv.Send(websocket.NewErrMessgae(err), conn)
+			return
+		}
 		var data ws.Push
 		if err := mapstructure.Decode(msg.Data, &data); err != nil {
 			srv.Send(websocket.NewErrMessgae(err), conn)
