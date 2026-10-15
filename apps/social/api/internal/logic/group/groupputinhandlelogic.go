@@ -11,7 +11,7 @@ import (
 	"github.com/IM_System/apps/social/api/internal/types"
 	"github.com/IM_System/apps/social/rpc/social"
 	"github.com/IM_System/pkg/constants"
-	"github.com/IM_System/pkg/ctxdata"
+	"github.com/IM_System/pkg/useraccess"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -32,11 +32,15 @@ func NewGroupPutInHandleLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 }
 
 func (l *GroupPutInHandleLogic) GroupPutInHandle(req *types.GroupPutInHandleRep) (resp *types.GroupPutInHandleResp, err error) {
+	uid, err := useraccess.RequireUser(l.ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	handleResp, err := l.svcCtx.SocialRpc.GroupPutInHandle(l.ctx, &social.GroupPutInHandleReq{
 		GroupReqId:   req.GroupReqId,
 		GroupId:      req.GroupId,
-		HandleUid:    ctxdata.GetUid(l.ctx),
+		HandleUid:    uid,
 		HandleResult: req.HandleResult,
 	})
 	if err != nil {

@@ -30,7 +30,9 @@ func NewGroupUserListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Gro
 }
 
 func (l *GroupUserListLogic) GroupUserList(req *types.GroupUserListReq) (resp *types.GroupUserListResp, err error) {
-	// todo: add your logic here and delete this line
+	if err := requireGroupAccess(l.ctx, l.svcCtx, req.GroupId, false); err != nil {
+		return nil, err
+	}
 
 	groupUsers, err := l.svcCtx.SocialRpc.Groupusers(l.ctx, &social.GroupusersReq{
 		GroupId: req.GroupId,

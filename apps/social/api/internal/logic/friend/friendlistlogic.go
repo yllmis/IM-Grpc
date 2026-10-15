@@ -10,7 +10,7 @@ import (
 	"github.com/IM_System/apps/social/api/internal/types"
 	"github.com/IM_System/apps/social/rpc/social"
 	"github.com/IM_System/apps/user/rpc/user"
-	"github.com/IM_System/pkg/ctxdata"
+	"github.com/IM_System/pkg/useraccess"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -33,7 +33,10 @@ func NewFriendListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Friend
 func (l *FriendListLogic) FriendList(req *types.FriendListReq) (resp *types.FriendListResp, err error) {
 	// todo: add your logic here and delete this line
 
-	uid := ctxdata.GetUid(l.ctx)
+	uid, err := useraccess.RequireUser(l.ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	friends, err := l.svcCtx.SocialRpc.FriendList(l.ctx, &social.FriendListReq{
 		UserId: uid,

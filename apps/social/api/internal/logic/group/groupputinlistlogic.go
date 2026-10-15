@@ -30,11 +30,16 @@ func NewGroupPutInListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Gr
 }
 
 func (l *GroupPutInListLogic) GroupPutInList(req *types.GroupPutInListRep) (resp *types.GroupPutInListResp, err error) {
-	// todo: add your logic here and delete this line
+	if err := requireGroupAccess(l.ctx, l.svcCtx, req.GroupId, true); err != nil {
+		return nil, err
+	}
 
 	list, err := l.svcCtx.SocialRpc.GroupPutinList(l.ctx, &social.GroupPutinListReq{
 		GroupId: req.GroupId,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	var respList []*types.GroupRequests
 	copier.Copy(&respList, list.GroupReqs)

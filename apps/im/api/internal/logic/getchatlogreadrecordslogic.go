@@ -13,6 +13,7 @@ import (
 	"github.com/IM_System/apps/user/rpc/user"
 	"github.com/IM_System/pkg/bitmap"
 	"github.com/IM_System/pkg/constants"
+	"github.com/IM_System/pkg/useraccess"
 	"github.com/IM_System/pkg/xerr"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -33,7 +34,10 @@ func NewGetChatLogReadRecordsLogic(ctx context.Context, svcCtx *svc.ServiceConte
 }
 
 func (l *GetChatLogReadRecordsLogic) GetChatLogReadRecords(req *types.GetChatLogReadRecordsReq) (resp *types.GetChatLogReadRecordsResp, err error) {
-	// todo: add your logic here and delete this line
+	uid, err := useraccess.RequireUser(l.ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	chatlogs, err := l.svcCtx.Im.GetChatLog(l.ctx, &im.GetChatLogReq{
 		MsgId: req.MsgId,
@@ -43,6 +47,19 @@ func (l *GetChatLogReadRecordsLogic) GetChatLogReadRecords(req *types.GetChatLog
 	}
 	if len(chatlogs.List) == 0 {
 		return nil, xerr.NewMsg("消息不存在")
+	}
+	chat := chatlogs.List[0]
+	switch constants.ChatType(chat.ChatType) {
+	case constants.SingleChatType:
+		if uid != chat.SendId && uid != chat.RecvId {
+			return nil, useraccess.Denied()
+		}
+	case constants.GroupChatType:
+		if err := requireGroup(l.ctx, l.svcCtx, uid, chat.RecvId); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, useraccess.Denied()
 	}
 
 	var (

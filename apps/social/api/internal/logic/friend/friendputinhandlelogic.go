@@ -9,7 +9,7 @@ import (
 	"github.com/IM_System/apps/social/api/internal/svc"
 	"github.com/IM_System/apps/social/api/internal/types"
 	"github.com/IM_System/apps/social/rpc/social"
-	"github.com/IM_System/pkg/ctxdata"
+	"github.com/IM_System/pkg/useraccess"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -31,10 +31,14 @@ func NewFriendPutInHandleLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 
 func (l *FriendPutInHandleLogic) FriendPutInHandle(req *types.FriendPutInHandleReq) (resp *types.FriendPutInHandleResp, err error) {
 	// todo: add your logic here and delete this line
+	uid, err := useraccess.RequireUser(l.ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	_, err = l.svcCtx.SocialRpc.FriendPutInHandle(l.ctx, &social.FriendPutInHandleReq{
 		FriendReqId:  req.FriendReqId,
-		UserId:       ctxdata.GetUid(l.ctx),
+		UserId:       uid,
 		HandleResult: req.HandleResult,
 	})
 

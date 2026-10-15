@@ -10,7 +10,7 @@ import (
 	"github.com/IM_System/apps/social/api/internal/types"
 	"github.com/IM_System/apps/social/rpc/social"
 	"github.com/IM_System/apps/user/rpc/userclient"
-	"github.com/IM_System/pkg/ctxdata"
+	"github.com/IM_System/pkg/useraccess"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -32,7 +32,10 @@ func NewFriendPutInListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *F
 
 func (l *FriendPutInListLogic) FriendPutInList(req *types.FriendPutInListReq) (resp *types.FriendPutInListResp, err error) {
 
-	uid := ctxdata.GetUid(l.ctx)
+	uid, err := useraccess.RequireUser(l.ctx)
+	if err != nil {
+		return nil, err
+	}
 	friendPutList, err := l.svcCtx.SocialRpc.FriendPutInList(l.ctx, &social.FriendPutInListReq{
 		UserId: uid,
 	})

@@ -9,7 +9,7 @@ import (
 	"github.com/IM_System/apps/im/api/internal/svc"
 	"github.com/IM_System/apps/im/api/internal/types"
 	"github.com/IM_System/apps/im/rpc/imclient"
-	"github.com/IM_System/pkg/ctxdata"
+	"github.com/IM_System/pkg/useraccess"
 	"github.com/jinzhu/copier"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -33,7 +33,10 @@ func NewGetConversationsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 func (l *GetConversationsLogic) GetConversations(req *types.GetConversationsReq) (resp *types.GetConversationsResp, err error) {
 	// todo: add your logic here and delete this line
 
-	uid := ctxdata.GetUid(l.ctx)
+	uid, err := useraccess.RequireUser(l.ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	data, err := l.svcCtx.GetConversations(l.ctx, &imclient.GetConversationsReq{
 		UserId: uid,

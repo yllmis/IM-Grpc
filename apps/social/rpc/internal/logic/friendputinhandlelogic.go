@@ -7,8 +7,11 @@ import (
 	"github.com/IM_System/apps/social/rpc/social"
 	"github.com/IM_System/apps/social/socialmodels"
 	"github.com/IM_System/pkg/constants"
+	"github.com/IM_System/pkg/useraccess"
 	"github.com/IM_System/pkg/xerr"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -40,6 +43,12 @@ func (l *FriendPutInHandleLogic) FriendPutInHandle(in *social.FriendPutInHandleR
 	friendReq, err := l.svcCtx.FriendRequestsModel.FindOne(l.ctx, int64(in.FriendReqId))
 	if err != nil {
 		return nil, errors.Wrapf(xerr.NewDBErr(), "find friendRequest by friendReqId err %v req %v", err, in.FriendReqId)
+	}
+	if in.UserId == "" || friendReq == nil || friendReq.ReqUid != in.UserId {
+		return nil, useraccess.Denied()
+	}
+	if constants.HandlerResult(in.HandleResult) != constants.PassHandlerResult && constants.HandlerResult(in.HandleResult) != constants.RefuseHandlerResult {
+		return nil, status.Error(codes.InvalidArgument, "不支持的审批结果")
 	}
 
 	// 验证是否有处理，不能重复处理
@@ -80,5 +89,5 @@ func (l *FriendPutInHandleLogic) FriendPutInHandle(in *social.FriendPutInHandleR
 		return nil
 	})
 
-	return &social.FriendPutInHandleResp{}, nil
+	return &social.FriendPutInHandleResp{}, err
 }

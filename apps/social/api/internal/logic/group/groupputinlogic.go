@@ -9,7 +9,7 @@ import (
 	"github.com/IM_System/apps/social/api/internal/svc"
 	"github.com/IM_System/apps/social/api/internal/types"
 	"github.com/IM_System/apps/social/rpc/social"
-	"github.com/IM_System/pkg/ctxdata"
+	"github.com/IM_System/pkg/useraccess"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -32,7 +32,10 @@ func NewGroupPutInLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GroupP
 func (l *GroupPutInLogic) GroupPutIn(req *types.GroupPutInRep) (resp *types.GroupPutInResp, err error) {
 	// todo: add your logic here and delete this line
 
-	uid := ctxdata.GetUid(l.ctx)
+	uid, err := useraccess.RequireUser(l.ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	_, err = l.svcCtx.SocialRpc.GroupPutin(l.ctx, &social.GroupPutinReq{
 		GroupId:    req.GroupId,

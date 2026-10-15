@@ -8,8 +8,11 @@ import (
 	"github.com/IM_System/apps/social/rpc/social"
 	"github.com/IM_System/apps/social/socialmodels"
 	"github.com/IM_System/pkg/constants"
+	"github.com/IM_System/pkg/useraccess"
 	"github.com/IM_System/pkg/xerr"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -40,6 +43,22 @@ func (l *GroupPutInHandleLogic) GroupPutInHandle(in *social.GroupPutInHandleReq)
 	groupReq, err := l.svcCtx.GroupRequestsModel.FindOne(l.ctx, int64(in.GroupReqId))
 	if err != nil {
 		return nil, errors.Wrapf(xerr.NewDBErr(), "find group req err %v req %v", err, in.GroupReqId)
+	}
+	if in.HandleUid == "" || groupReq == nil || in.GroupId != groupReq.GroupId {
+		return nil, useraccess.Denied()
+	}
+	member, err := l.svcCtx.GroupMembersModel.FindByGroupIdAndUserId(l.ctx, in.HandleUid, groupReq.GroupId)
+	if err != nil {
+		if errors.Is(err, socialmodels.ErrNotFound) {
+			return nil, useraccess.Denied()
+		}
+		return nil, errors.Wrap(xerr.NewDBErr(), "查询审批人群权限失败")
+	}
+	if member == nil || member.UserId != in.HandleUid || member.GroupId != groupReq.GroupId || (constants.GroupRoleLevel(member.RoleLevel) != constants.CreatorGroupRoleLevel && constants.GroupRoleLevel(member.RoleLevel) != constants.ManagerGroupRoleLevel) {
+		return nil, useraccess.Denied()
+	}
+	if constants.HandlerResult(in.HandleResult) != constants.PassHandlerResult && constants.HandlerResult(in.HandleResult) != constants.RefuseHandlerResult {
+		return nil, status.Error(codes.InvalidArgument, "不支持的审批结果")
 	}
 
 	switch constants.HandlerResult(groupReq.HandleResult.Int64) {

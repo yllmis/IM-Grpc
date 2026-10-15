@@ -9,7 +9,7 @@ import (
 	"github.com/IM_System/apps/user/api/internal/svc"
 	"github.com/IM_System/apps/user/api/internal/types"
 	"github.com/IM_System/apps/user/rpc/user"
-	"github.com/IM_System/pkg/ctxdata"
+	"github.com/IM_System/pkg/useraccess"
 	"github.com/jinzhu/copier"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -33,7 +33,10 @@ func NewDetailLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DetailLogi
 func (l *DetailLogic) Detail(req *types.UserInfoReq) (resp *types.UserInfoResp, err error) {
 	// todo: add your logic here and delete this line
 
-	uid := ctxdata.GetUid(l.ctx)
+	uid, err := useraccess.RequireUser(l.ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	userInfo, err := l.svcCtx.User.GetUserInfo(l.ctx, &user.GetUserInfoReq{
 		Id: uid,

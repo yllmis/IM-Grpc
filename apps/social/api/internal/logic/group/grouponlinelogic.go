@@ -30,13 +30,18 @@ func NewGroupOnlineLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Group
 }
 
 func (l *GroupOnlineLogic) GroupOnline(req *types.GroupOnlineReq) (resp *types.GroupOnlineResp, err error) {
-	// todo: add your logic here and delete this line
+	if err := requireGroupAccess(l.ctx, l.svcCtx, req.GroupId, false); err != nil {
+		return nil, err
+	}
 
 	groupUsers, err := l.svcCtx.SocialRpc.Groupusers(l.ctx, &social.GroupusersReq{
 		GroupId: req.GroupId,
 	})
 
-	if err != nil || len(groupUsers.List) == 0 {
+	if err != nil {
+		return nil, err
+	}
+	if len(groupUsers.List) == 0 {
 		return &types.GroupOnlineResp{}, nil
 	}
 
